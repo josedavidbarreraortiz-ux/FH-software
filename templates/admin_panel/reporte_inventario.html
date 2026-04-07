@@ -1,0 +1,71 @@
+{% extends 'base_admin.html' %}
+{% block title %}Reporte de Inventario - Admin FH{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-file-pdf" style="color:#ff9800"></i> Reporte de Inventario</h1>
+    <a href="/panel/reportes/" class="btn-secondary-fh" style="text-decoration:none;">
+        <i class="fas fa-arrow-left"></i> Volver a Reportes
+    </a>
+</div>
+<div class="report-card">
+    <div class="report-card-header" style="background:linear-gradient(135deg,#ff9800,#ffa726);">
+        <i class="fas fa-filter"></i> Filtros del Reporte
+    </div>
+    <div class="report-card-body">
+        <form action="/panel/reportes/inventario/pdf/" method="get" target="_blank">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label-fh">Producto</label>
+                    <input type="text" name="nombre" class="form-control-fh" placeholder="Buscar por nombre...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-fh">Estado de Stock</label>
+                    <select name="stock" class="form-control-fh">
+                        <option value="">Todos</option>
+                        <option value="Agotado">Agotado (0 unidades)</option>
+                        <option value="Bajo">Stock Bajo (bajo mínimo)</option>
+                        <option value="Normal">Stock Normal</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-fh">Ubicación</label>
+                    <input type="text" name="ubicacion" class="form-control-fh" placeholder="Ej: Bodega A">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-fh">Ordenar por</label>
+                    <select name="ordenarPor" class="form-control-fh">
+                        <option value="producto">Producto</option>
+                        <option value="stock">Stock</option>
+                        <option value="ubicacion">Ubicación</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <label class="form-label-fh">Dirección</label>
+                    <select name="direccion" class="form-control-fh">
+                        <option value="asc">Ascendente</option>
+                        <option value="desc">Descendente</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:1.5rem;">
+                <button type="submit" class="btn-danger-fh btn-lg-fh"><i class="fas fa-file-pdf"></i> Generar PDF</button>
+                <button type="reset" class="btn-outline-fh btn-lg-fh"><i class="fas fa-times-circle"></i> Limpiar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<style>
+.report-card{background:var(--card-bg);border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;animation:fadeInUp .4s ease}
+.report-card-header{color:#fff;padding:14px 20px;font-weight:600;font-size:.95rem}
+.report-card-header i{margin-right:8px}
+.report-card-body{padding:24px}
+.btn-danger-fh{background:linear-gradient(135deg,#dc3545,#c82333);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.95rem;display:inline-flex;align-items:center;gap:8px;transition:all .3s}
+.btn-danger-fh:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(220,53,69,.4)}
+.btn-outline-fh{background:transparent;color:var(--text-secondary);border:2px solid var(--border-color);padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.95rem;display:inline-flex;align-items:center;gap:8px;transition:all .3s}
+.btn-outline-fh:hover{border-color:var(--accent);color:var(--accent)}
+.btn-lg-fh{padding:12px 28px;font-size:1rem}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+</style>
+{% endblock %}

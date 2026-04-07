@@ -1,0 +1,6 @@
+nombre;email;password;rol
+Carlos Mendoza;carlos.mendoza@email.com;Carlos123;USER
+Laura Jiménez;laura.jimenez@email.com;Laura456;USER
+Pedro Ramírez;pedro.ramirez@email.com;Pedro789;ADMIN
+María López;maria.lopez@email.com;Maria321;USER
+Andrés Torres;andres.torres@email.com;Andres654;USER

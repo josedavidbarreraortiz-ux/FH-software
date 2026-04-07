@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Pedido #{{ venta.venta_codigo }} - FH Store{% endblock %}
+{% block content %}
+<div class="checkout-wrapper">
+    <div class="container">
+        <div class="checkout-header">
+            <h1 class="checkout-title"><i class="fas fa-box" style="margin-right:12px"></i>Pedido #{{ venta.venta_codigo }}</h1>
+            <p class="checkout-subtitle">Detalles de tu compra</p>
+        </div>
+
+        <a href="/pedidos/" class="btn-back" style="display:inline-flex;margin-bottom:1.5rem;text-decoration:none"><i
+                class="fas fa-arrow-left" style="margin-right:8px"></i>Volver a pedidos</a>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="summary-card">
+                    <h2 class="summary-title"><i class="fas fa-receipt"
+                            style="margin-right:8px;color:#667eea"></i>Resumen</h2>
+                    <div class="summary-totals">
+                        <div class="totals-row">
+                            <span><i class="fas fa-calendar" style="margin-right:6px;color:#667eea"></i>Fecha</span>
+                            <span>{{ venta.venta_fecha }}</span>
+                        </div>
+                        <div class="totals-row">
+                            <span><i class="fas fa-credit-card" style="margin-right:6px;color:#667eea"></i>Pago</span>
+                            <span>{{ venta.metodo_pago.metodo_pago_nombre|default:"N/A" }}</span>
+                        </div>
+                        <div class="totals-row">
+                            <span><i class="fas fa-comment" style="margin-right:6px;color:#667eea"></i>Notas</span>
+                            <span>{{ venta.observaciones|default:"Ninguna" }}</span>
+                        </div>
+                        <div class="totals-row total-row">
+                            <span>Total</span>
+                            <span class="total-amount">{{ total_formateado }} COP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="checkout-card">
+                    <div class="card-header-custom">
+                        <div class="header-icon"><i class="fas fa-shopping-bag"></i></div>
+                        <div>
+                            <h3>Productos del Pedido</h3>
+                            <p>{{ detalles|length }} producto{{ detalles|length|pluralize:"s" }}</p>
+                        </div>
+                    </div>
+                    {% for d in detalles %}
+                    <div class="summary-item" style="padding:15px 0;border-bottom:1px solid #f1f5f9">
+                        <div class="item-image">
+                            {% if d.producto.foto %}
+                            <img src="/media/uploads/productos/{{ d.producto.foto }}"
+                                alt="{{ d.producto.producto_nombre }}">
+                            {% else %}
+                            <img src="https://placehold.co/60x60/667eea/FFFFFF?text=P" alt="Producto">
+                            {% endif %}
+                            <span class="qty-badge">{{ d.venta_detalle_cantidad }}</span>
+                        </div>
+                        <div class="item-info">
+                            <span class="item-name">{{ d.producto.producto_nombre|default:"-" }}</span>
+                            <span class="item-price">${{ d.subtotal|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

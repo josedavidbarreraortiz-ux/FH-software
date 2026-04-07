@@ -1,0 +1,212 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Reporte de Productos - Admin FH{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-file-pdf" style="color:#dc3545"></i> Reporte de Productos</h1>
+    <a href="/panel/productos/" class="btn-secondary-fh" style="text-decoration:none;">
+        <i class="fas fa-arrow-left"></i> Volver a Productos
+    </a>
+</div>
+
+<!-- Card de Filtros -->
+<div class="report-card">
+    <div class="report-card-header">
+        <i class="fas fa-filter"></i> Filtros del Reporte
+    </div>
+    <div class="report-card-body">
+        <form id="reportForm" action="/panel/reportes/productos/pdf/" method="get" target="_blank">
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label-fh">ID del Producto</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-hashtag"></i>
+                        <input type="number" name="id" class="form-control-fh" placeholder="Ej: 1">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label-fh">Nombre</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="nombre" class="form-control-fh" placeholder="Buscar por nombre...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label-fh">Marca</label>
+                    <select name="marca" class="form-control-fh">
+                        <option value="">Todas las marcas</option>
+                        {% for m in marcas %}
+                        <option value="{{ m }}">{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <label class="form-label-fh">Categoría</label>
+                    <select name="categoriaId" class="form-control-fh">
+                        <option value="">Todas las categorías</option>
+                        {% for c in categorias %}
+                        <option value="{{ c.categoria_id }}">{{ c.categoria_nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-fh">Estado del Producto</label>
+                    <select name="estado" class="form-control-fh">
+                        <option value="">Todos</option>
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-fh">Stock</label>
+                    <select name="stock" class="form-control-fh">
+                        <option value="">Todos</option>
+                        <option value="Agotado">Agotado (Sin Stock)</option>
+                        <option value="ConStock">Con Stock Disponible</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-fh">Rango de Precios</label>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <input type="number" name="precioMin" class="form-control-fh" step="0.01" placeholder="Mín" style="flex:1;">
+                        <span style="color:var(--text-muted); font-weight:600;">—</span>
+                        <input type="number" name="precioMax" class="form-control-fh" step="0.01" placeholder="Máx" style="flex:1;">
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border-color:var(--border-color); margin:1.5rem 0;">
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label-fh">Ordenar por</label>
+                    <select name="ordenarPor" class="form-control-fh">
+                        <option value="nombre">Nombre</option>
+                        <option value="id">ID</option>
+                        <option value="precio">Precio</option>
+                        <option value="stock">Stock</option>
+                        <option value="marca">Marca</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label-fh">Dirección</label>
+                    <select name="direccion" class="form-control-fh">
+                        <option value="asc">Ascendente (A-Z, menor a mayor)</option>
+                        <option value="desc">Descendente (Z-A, mayor a menor)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:12px; margin-top:1.5rem;">
+                <button type="submit" class="btn-danger-fh btn-lg-fh">
+                    <i class="fas fa-file-pdf"></i> Generar PDF
+                </button>
+                <button type="reset" class="btn-outline-fh btn-lg-fh">
+                    <i class="fas fa-times-circle"></i> Limpiar Filtros
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Card de Información -->
+<div class="report-card mt-3">
+    <div class="report-card-body">
+        <h5 style="color:var(--text-primary); margin-bottom:0.5rem;">
+            <i class="fas fa-info-circle" style="color:var(--accent);"></i> Información
+        </h5>
+        <ul style="color:var(--text-secondary); margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+            <li>Deja los campos vacíos para incluir <strong>todos los productos</strong></li>
+            <li><strong>Estado:</strong> Filtra por estado del producto (Activo/Inactivo)</li>
+            <li><strong>Stock:</strong> Filtra por disponibilidad de inventario</li>
+            <li>El PDF se abrirá en una <strong>nueva pestaña</strong></li>
+        </ul>
+    </div>
+</div>
+
+<style>
+    .report-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        animation: fadeInUp 0.4s ease;
+    }
+    .report-card-header {
+        background: linear-gradient(135deg, #0d47a1, #1565c0);
+        color: white;
+        padding: 14px 20px;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .report-card-header i {
+        margin-right: 8px;
+    }
+    .report-card-body {
+        padding: 24px;
+    }
+    .input-icon-wrapper {
+        position: relative;
+    }
+    .input-icon-wrapper i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+    .input-icon-wrapper input {
+        padding-left: 2.2rem;
+    }
+    .btn-danger-fh {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-danger-fh:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    .btn-outline-fh {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 2px solid var(--border-color);
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-outline-fh:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+    .btn-lg-fh {
+        padding: 12px 28px;
+        font-size: 1rem;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

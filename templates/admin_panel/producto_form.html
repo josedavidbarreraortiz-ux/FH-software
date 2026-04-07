@@ -1,0 +1,404 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ titulo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-box" style="color:var(--accent)"></i> {{ titulo }}</h1>
+    <a href="/panel/productos/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+
+<div class="card-fh" style="max-width:900px">
+    <div class="card-body" style="padding:2rem">
+        <form id="productoForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Nombre y Código de Barras -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label-fh">Nombre <span style="color:var(--danger)">*</span></label>
+                        <input type="text" name="nombre" class="form-control-fh"
+                            value="{{ producto.producto_nombre|default:'' }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label-fh">Código de barras</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" name="codigo" id="codigoBarrasInput" class="form-control-fh" style="flex:1"
+                                value="{{ producto.producto_codigo_bar|default:'' }}">
+                            <button type="button" class="btn-outline-fh" onclick="generarCodigoBarras()" title="Generar nuevo código" style="white-space:nowrap">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <small style="color:var(--text-secondary); font-size:0.78rem;">Click en <i class="fas fa-sync-alt"></i> para regenerar</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marca y Categoría -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label-fh">Marca</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <select id="marcaSelect" name="marca" class="form-control-fh form-select-fh" style="flex:1">
+                                <option value="">-- Seleccionar --</option>
+                                {% for m in marcas %}
+                                <option value="{{ m }}" {% if producto.producto_marca == m %}selected{% endif %}>{{ m }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn-outline-fh" data-bs-toggle="modal" data-bs-target="#nuevaMarcaModal" style="white-space:nowrap">
+                                <i class="fas fa-plus"></i> Nueva
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label-fh">Categoría</label>
+                        <select name="categoria" class="form-control-fh form-select-fh">
+                            <option value="">-- Seleccionar --</option>
+                            {% for c in categorias %}
+                            <option value="{{ c.categoria_id }}" {% if producto.categoria_id == c.categoria_id %}selected{% endif %}>{{ c.categoria_nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Precio, Unidad y Estado -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label-fh">Precio de venta <span style="color:var(--danger)">*</span></label>
+                        <input type="number" name="precio" class="form-control-fh" step="0.01"
+                            value="{{ producto.producto_precio_venta|default_if_none:'' }}" required>
+                        {% if producto and producto.producto_precio_venta %}
+                        <small style="color:var(--success); font-size:0.78rem;">Precio actual: {{ producto.precio_formateado }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label-fh">Tipo de Unidad</label>
+                        <select name="unidad" class="form-control-fh form-select-fh">
+                            <option value="Unidad" {% if producto.tipo_unidad == 'Unidad' %}selected{% endif %}>Unidad</option>
+                            <option value="Kg" {% if producto.tipo_unidad == 'Kg' %}selected{% endif %}>Kilogramo</option>
+                            <option value="Litro" {% if producto.tipo_unidad == 'Litro' %}selected{% endif %}>Litro</option>
+                            <option value="Metro" {% if producto.tipo_unidad == 'Metro' %}selected{% endif %}>Metro</option>
+                            <option value="Caja" {% if producto.tipo_unidad == 'Caja' %}selected{% endif %}>Caja</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label-fh">Estado</label>
+                        <select name="estado" class="form-control-fh form-select-fh">
+                            <option value="Activo" {% if producto.producto_estado == 'Activo' or not producto %}selected{% endif %}>Activo</option>
+                            <option value="Inactivo" {% if producto.producto_estado == 'Inactivo' %}selected{% endif %}>Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="form-group">
+                <label class="form-label-fh">Resumen <span style="color:var(--danger)">*</span></label>
+                <textarea name="resumen" class="form-control-fh" rows="2" required>{{ producto.resumen|default:'' }}</textarea>
+                <small style="color:var(--text-secondary); font-size:0.78rem;">Breve descripción del producto</small>
+            </div>
+
+            <!-- Especificación -->
+            <div class="form-group">
+                <label class="form-label-fh">Especificaciones <span style="color:var(--danger)">*</span></label>
+                <textarea name="especificacion" class="form-control-fh" rows="3" required>{{ producto.especificacion|default:'' }}</textarea>
+                <small style="color:var(--text-secondary); font-size:0.78rem;">Detalles técnicos del producto</small>
+            </div>
+
+            <!-- Color del Producto -->
+            <h5 style="margin-top:2rem; margin-bottom:1rem; color:var(--text-primary)">
+                <i class="fas fa-palette" style="color:var(--accent)"></i> Color del Producto
+            </h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <select id="colorSelect" name="color" class="form-control-fh form-select-fh">
+                            <option value="">-- Seleccionar --</option>
+                            {% for c in colores %}
+                            <option value="{{ c.valor_id }}" {% if color_actual == c.valor_id %}selected{% endif %}>{{ c.valor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn-outline-fh" data-bs-toggle="modal" data-bs-target="#nuevoColorModal" style="width:100%">
+                        <i class="fas fa-plus-circle"></i> Agregar Nuevo Color
+                    </button>
+                </div>
+            </div>
+
+            <!-- Imagen del Producto -->
+            <h5 style="margin-top:2rem; margin-bottom:1rem; color:var(--text-primary)">
+                <i class="fas fa-image" style="color:var(--accent)"></i> Imagen del Producto
+            </h5>
+
+            {% if producto and producto.foto %}
+            <div class="form-group">
+                <label class="form-label-fh">Imagen Actual</label>
+                <div style="max-width:200px; border:1px solid var(--border); border-radius:12px; padding:0.5rem; background:var(--bg-card);">
+                    <img src="/media/uploads/productos/{{ producto.foto }}" alt="{{ producto.producto_nombre }}"
+                        style="width:100%; border-radius:8px; object-fit:contain; max-height:180px;"
+                        onerror="this.parentElement.innerHTML='<span style=\'color:var(--text-secondary)\'>Sin imagen</span>'">
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label class="form-label-fh">{% if producto %}Cambiar Imagen{% else %}Subir Imagen{% endif %}</label>
+                        <input type="file" id="imagenFile" name="imagenFile" class="form-control-fh" accept="image/*" onchange="previewImage(event)">
+                        {% if producto %}
+                        <small style="color:var(--text-secondary); font-size:0.78rem;">Dejar vacío para mantener la imagen actual</small>
+                        {% endif %}
+                        <input type="hidden" name="foto" value="{{ producto.foto|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label-fh">Vista previa</label>
+                    <div id="imagePreview" style="min-height:150px; border:1px solid var(--border); border-radius:12px; padding:0.5rem; display:flex; align-items:center; justify-content:center; background:var(--bg-card);">
+                        <span style="color:var(--text-secondary)">No hay imagen nueva</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventario -->
+            {% if not producto %}
+            <h5 style="margin-top:2rem; margin-bottom:1rem; color:var(--text-primary)">
+                <i class="fas fa-boxes" style="color:var(--accent)"></i> Inventario Inicial
+            </h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock actual</label>
+                        <input type="number" name="stock_actual" class="form-control-fh" value="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock mínimo</label>
+                        <input type="number" name="stock_minimo" class="form-control-fh" value="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock máximo</label>
+                        <input type="number" name="stock_maximo" class="form-control-fh" value="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Ubicación</label>
+                        <input type="text" name="ubicacion" class="form-control-fh" placeholder="Ej: A1">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if producto and inventario %}
+            <h5 style="margin-top:2rem; margin-bottom:1rem; color:var(--text-primary)">
+                <i class="fas fa-boxes" style="color:var(--accent)"></i> Inventario
+            </h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock actual</label>
+                        <input type="number" name="stock_actual" class="form-control-fh"
+                            value="{{ inventario.inventario_stock_actual|default:0 }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock mínimo</label>
+                        <input type="number" name="stock_minimo" class="form-control-fh"
+                            value="{{ inventario.inventario_stock_minimo|default:0 }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock máximo</label>
+                        <input type="number" name="stock_maximo" class="form-control-fh"
+                            value="{{ inventario.inventario_stock_maximo|default:0 }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label-fh">Ubicación</label>
+                        <input type="text" name="ubicacion" class="form-control-fh"
+                            value="{{ inventario.inventario_ubicacion|default:'' }}">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top:2rem; display:flex; gap:1rem;">
+                <button type="submit" class="btn-primary-fh">
+                    <i class="fas fa-save"></i> {% if producto %}Actualizar{% else %}Guardar{% endif %}
+                </button>
+                <a href="/panel/productos/" class="btn-outline-fh">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Nuevo Color -->
+<div class="modal fade" id="nuevoColorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                <h5 class="modal-title" style="color:var(--text-primary)">
+                    <i class="fas fa-palette" style="color:var(--accent)"></i> Agregar Nuevo Color
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label-fh">Nombre del Color</label>
+                    <input type="text" id="nuevoColorNombre" class="form-control-fh" placeholder="Ej: Verde, Amarillo">
+                </div>
+                <div id="colorMensaje" class="alert-fh" style="display:none; margin-top:1rem;"></div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);">
+                <button type="button" class="btn-outline-fh" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-primary-fh" onclick="guardarNuevoColor()">
+                    <i class="fas fa-save"></i> Guardar Color
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Marca -->
+<div class="modal fade" id="nuevaMarcaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                <h5 class="modal-title" style="color:var(--text-primary)">
+                    <i class="fas fa-tag" style="color:var(--accent)"></i> Agregar Nueva Marca
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label-fh">Nombre de la Marca</label>
+                    <input type="text" id="nuevaMarcaNombre" class="form-control-fh" placeholder="Ej: Samsung, Apple">
+                </div>
+                <div class="alert-fh" style="margin-top:1rem;">
+                    <i class="fas fa-info-circle"></i> La marca se guardará cuando envíe el formulario.
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);">
+                <button type="button" class="btn-outline-fh" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-primary-fh" onclick="agregarNuevaMarca()">
+                    <i class="fas fa-check"></i> Usar Esta Marca
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Generar código de barras EAN-13
+function generarCodigoBarras() {
+    let codigo = '';
+    for (let i = 0; i < 12; i++) {
+        codigo += Math.floor(Math.random() * 10);
+    }
+    let suma = 0;
+    for (let i = 0; i < 12; i++) {
+        suma += parseInt(codigo[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    codigo += (10 - (suma % 10)) % 10;
+    const input = document.getElementById('codigoBarrasInput');
+    if (input) input.value = codigo;
+}
+
+// Preview de imagen
+function previewImage(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('imagePreview');
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" style="max-height:150px; border-radius:8px; object-fit:contain;" alt="Preview">`;
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.innerHTML = '<span style="color:var(--text-secondary)">No hay imagen nueva</span>';
+    }
+}
+
+// Guardar nuevo color via AJAX
+function guardarNuevoColor() {
+    const nombre = document.getElementById('nuevoColorNombre').value.trim();
+    const mensaje = document.getElementById('colorMensaje');
+    if (!nombre) {
+        mensaje.className = 'alert-fh error';
+        mensaje.textContent = 'Por favor ingrese el nombre del color';
+        mensaje.style.display = 'block';
+        return;
+    }
+    const csrfToken = document.querySelector('#productoForm input[name="csrfmiddlewaretoken"]').value;
+    fetch('/panel/productos/color/nuevo/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: 'nombre=' + encodeURIComponent(nombre)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById('colorSelect');
+            const option = document.createElement('option');
+            option.value = data.valor_id;
+            option.text = data.valor;
+            option.selected = true;
+            select.appendChild(option);
+            document.getElementById('nuevoColorNombre').value = '';
+            mensaje.style.display = 'none';
+            bootstrap.Modal.getInstance(document.getElementById('nuevoColorModal')).hide();
+        } else {
+            mensaje.className = 'alert-fh error';
+            mensaje.textContent = data.mensaje || 'Error al guardar el color';
+            mensaje.style.display = 'block';
+        }
+    })
+    .catch(() => {
+        mensaje.className = 'alert-fh error';
+        mensaje.textContent = 'Error de conexión';
+        mensaje.style.display = 'block';
+    });
+}
+
+// Agregar nueva marca al select
+function agregarNuevaMarca() {
+    const nuevaMarca = document.getElementById('nuevaMarcaNombre').value.trim();
+    if (!nuevaMarca) {
+        alert('Por favor ingrese el nombre de la marca');
+        return;
+    }
+    const select = document.getElementById('marcaSelect');
+    const option = document.createElement('option');
+    option.value = nuevaMarca;
+    option.text = nuevaMarca;
+    option.selected = true;
+    select.appendChild(option);
+    document.getElementById('nuevaMarcaNombre').value = '';
+    bootstrap.Modal.getInstance(document.getElementById('nuevaMarcaModal')).hide();
+}
+</script>
+{% endblock %}

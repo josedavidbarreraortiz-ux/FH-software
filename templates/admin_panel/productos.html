@@ -1,0 +1,58 @@
+{% extends 'base_admin.html' %}
+{% block title %}Productos - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-box" style="color:var(--accent)"></i> Productos</h1>
+    <a href="/panel/productos/crear/" class="btn-primary-fh"><i class="fas fa-plus"></i> Nuevo Producto</a>
+</div>
+
+<div class="table-container">
+    <table class="table-fh">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Marca</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in productos %}
+            <tr>
+                <td>{{ p.producto_id }}</td>
+                <td style="color:var(--text-primary); font-weight:500">{{ p.producto_nombre }}</td>
+                <td>{{ p.producto_marca|default:"-" }}</td>
+                <td><span class="badge-fh info">{{ p.categoria.categoria_nombre|default:"-" }}</span></td>
+                <td style="color:var(--success); font-weight:600">{{ p.precio_formateado }}</td>
+                <td>
+                    {% if p.producto_estado == 'Activo' %}
+                    <span class="badge-fh success">Activo</span>
+                    {% else %}
+                    <span class="badge-fh danger">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/panel/productos/{{ p.producto_id }}/" class="btn-outline-fh btn-sm" title="Ver detalle"><i
+                            class="fas fa-eye"></i></a>
+                    <a href="/panel/productos/{{ p.producto_id }}/editar/" class="btn-outline-fh btn-sm" title="Editar"><i
+                            class="fas fa-edit"></i></a>
+                    <form method="post" action="/panel/productos/{{ p.producto_id }}/eliminar/" style="display:inline"
+                        onsubmit="return confirmDelete(this, '{{ p.producto_nombre }}')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-danger-fh btn-sm" title="Eliminar"><i
+                                class="fas fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="empty-state"><i class="fas fa-box-open"></i>No hay productos</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

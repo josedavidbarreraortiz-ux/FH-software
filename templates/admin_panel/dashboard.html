@@ -1,0 +1,100 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Dashboard - Admin FH{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-chart-pie" style="color:var(--accent)"></i> Dashboard</h1>
+    <span class="text-muted-fh">Bienvenido, {{ request.session.user_name }}</span>
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card purple">
+            <div class="stat-icon"><i class="fas fa-box"></i></div>
+            <div class="stat-value">{{ total_productos }}</div>
+            <div class="stat-label">Productos</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+            <div class="stat-value">{{ total_ventas }}</div>
+            <div class="stat-label">Ventas Totales</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-value" style="font-size:1.3rem">{{ ingresos_total }}</div>
+            <div class="stat-label">Ingresos</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ total_usuarios }}</div>
+            <div class="stat-label">Usuarios</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fas fa-tags"></i></div>
+            <div class="stat-value">{{ total_categorias }}</div>
+            <div class="stat-label">Categorías</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+            <div class="stat-value">{{ ventas_hoy }}</div>
+            <div class="stat-label">Ventas Hoy</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ stock_bajo }}</div>
+            <div class="stat-label">Stock Bajo</div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Ventas -->
+<div class="mt-4">
+    <h5 style="margin-bottom:1rem; color:var(--text-primary)"><i class="fas fa-clock"></i> Últimas Ventas</h5>
+    <div class="table-container">
+        <table class="table-fh">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Método Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in ultimas_ventas %}
+                <tr>
+                    <td><span class="badge-fh purple">{{ v.venta_codigo }}</span></td>
+                    <td>{{ v.cliente.cliente_nombre|default:"-" }}</td>
+                    <td>{{ v.venta_fecha }} {{ v.venta_hora|time:"H:i" }}</td>
+                    <td style="color:var(--success); font-weight:600">{{ v.total_formateado }}</td>
+                    <td>{{ v.metodo_pago.metodo_pago_nombre|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center" style="padding:2rem; color:var(--text-muted)">No hay ventas
+                        registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

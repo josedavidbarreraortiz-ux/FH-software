@@ -1,0 +1,21 @@
+nombre;email;password;rol
+Santiago García;santiago.garcia@email.com;Santi123;USER
+Valentina Martínez;valentina.martinez@email.com;Valen456;USER
+Mateo Rodríguez;mateo.rodriguez@email.com;Mateo789;USER
+Isabella Hernández;isabella.hernandez@email.com;Isa321;ADMIN
+Samuel Díaz;samuel.diaz@email.com;Samuel654;USER
+Camila Morales;camila.morales@email.com;Camila987;USER
+Nicolás Castillo;nicolas.castillo@email.com;Nico123;USER
+Luciana Vargas;luciana.vargas@email.com;Luci456;USER
+Sebastián Rojas;sebastian.rojas@email.com;Seba789;ADMIN
+Mariana Ortiz;mariana.ortiz@email.com;Mari321;USER
+Daniel Peña;daniel.pena@email.com;Dani654;USER
+Gabriela Suárez;gabriela.suarez@email.com;Gabi987;USER
+Alejandro Reyes;alejandro.reyes@email.com;Alex123;USER
+Sofía Navarro;sofia.navarro@email.com;Sofi456;ADMIN
+Emilio Cruz;emilio.cruz@email.com;Emil789;USER
+Paula Figueroa;paula.figueroa@email.com;Paula321;USER
+Diego Salazar;diego.salazar@email.com;Diego654;USER
+Catalina Paredes;catalina.paredes@email.com;Cata987;USER
+Fernando Aguilar;fernando.aguilar@email.com;Fer123;USER
+Andrea Molina;andrea.molina@email.com;Andre456;USER

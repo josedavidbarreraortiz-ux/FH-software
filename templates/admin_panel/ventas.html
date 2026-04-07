@@ -1,0 +1,40 @@
+{% extends 'base_admin.html' %}
+{% block title %}Ventas - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-shopping-cart" style="color:var(--accent)"></i> Ventas</h1>
+</div>
+<div class="table-container">
+    <table class="table-fh">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Total</th>
+                <th>Método Pago</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td><span class="badge-fh purple">{{ v.venta_codigo }}</span></td>
+                <td style="color:var(--text-primary)">{{ v.cliente.cliente_nombre|default:"-" }}</td>
+                <td>{{ v.venta_fecha }}</td>
+                <td>{{ v.venta_hora|time:"H:i" }}</td>
+                <td style="color:var(--success); font-weight:700">{{ v.total_formateado }}</td>
+                <td>{{ v.metodo_pago.metodo_pago_nombre|default:"-" }}</td>
+                <td><a href="/panel/ventas/{{ v.venta_codigo }}/" class="btn-outline-fh btn-sm"><i
+                            class="fas fa-eye"></i> Ver</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="empty-state">No hay ventas</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

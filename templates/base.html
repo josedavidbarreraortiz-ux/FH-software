@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FH{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="main-nav-container">
+            <a class="logo" href="/">FH</a>
+            <ul class="nav-links-main">
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/productos/">Productos</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+            <div class="header-icons">
+                {% if request.session.user_id %}
+                <a href="/carrito/" class="header-icon-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Carrito</span>
+                    {% if request.session.carrito %}
+                    <span class="badge-cart-header">{{ request.session.carrito|length }}</span>
+                    {% endif %}
+                </a>
+                <div class="icon-divider"></div>
+                <a href="/pedidos/" class="header-icon-item">
+                    <i class="fas fa-box"></i>
+                    <span>Pedidos</span>
+                </a>
+                <div class="icon-divider"></div>
+                <a href="/perfil/" class="header-icon-item">
+                    <i class="fas fa-user"></i>
+                    <span>{{ request.session.user_name }}</span>
+                </a>
+                {% if request.session.user_role == 'ADMIN' %}
+                <div class="icon-divider"></div>
+                <a href="/panel/" class="header-icon-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                {% endif %}
+                <div class="icon-divider"></div>
+                <a href="/accounts/logout/" class="header-icon-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+                {% else %}
+                <a href="/accounts/login/" class="header-icon-item">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Ingresar</span>
+                </a>
+                <div class="icon-divider"></div>
+                <a href="/accounts/register/" class="header-icon-item">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Registro</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Categorías -->
+        {% if categorias_nav %}
+        <div class="categories-nav">
+            <ul class="categories-list">
+                {% for c in categorias_nav %}
+                <li><a href="/productos/?categoria={{ c.categoria_id }}">{{ c.categoria_nombre }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </header>
+
+    <!-- Messages -->
+    <div class="container" style="margin-top:110px; padding-top:0.5rem;">
+        {% if messages %}
+        {% for message in messages %}
+        <div
+            class="alert-fh {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}warning{% endif %}">
+            <i
+                class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer id="contacto">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h4>FH TechStore</h4>
+                <p>Tu destino número uno para tecnología de vanguardia.</p>
+                {% if request.session.user_id %}
+                <p style="margin-top:0.5rem;"><i class="fas fa-user"></i> Bienvenido, <strong>{{ request.session.user_name }}</strong></p>
+                <p><i class="fas fa-envelope"></i> {{ request.session.user_email }}</p>
+                {% endif %}
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Productos</h4>
+                <ul>
+                    {% for c in categorias_nav %}
+                    <li><a href="/productos/?categoria={{ c.categoria_id }}">{{ c.categoria_nombre }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Soporte</h4>
+                <ul>
+                    <li><a href="#">Preguntas Frecuentes</a></li>
+                    <li><a href="#">Términos y Condiciones</a></li>
+                    <li><a href="#">Política de Privacidad</a></li>
+                    <li><a href="#">Devoluciones</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contacto</h4>
+                <p><i class="fas fa-map-marker-alt"></i> Carrera 15 #93-47, Bogotá</p>
+                <p><i class="fas fa-phone"></i> +57 310 123 4567</p>
+                <p><i class="fas fa-envelope"></i> info@fh.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 FH. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

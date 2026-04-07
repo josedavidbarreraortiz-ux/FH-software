@@ -1,0 +1,412 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Carga Masiva de Productos - Admin FH{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-file-upload" style="color:#27ae60"></i> Carga Masiva de Productos</h1>
+    <a href="/panel/productos/" class="btn-secondary-fh" style="text-decoration:none;">
+        <i class="fas fa-arrow-left"></i> Volver a Productos
+    </a>
+</div>
+
+<!-- Card de Carga -->
+<div class="upload-card">
+    <div class="upload-card-header">
+        <i class="fas fa-cloud-upload-alt"></i> Importar Productos desde Archivo
+    </div>
+    <div class="upload-card-body">
+
+        {% if carga_completada %}
+        <!-- Estado: Carga completada -->
+        <div class="upload-result">
+            <div class="upload-result-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3>Proceso de importación completado</h3>
+            <p>Revisa los mensajes de arriba para ver el resultado detallado.</p>
+            <a href="/panel/carga-masiva/" class="btn-primary-upload" style="text-decoration:none; display:inline-flex;">
+                <i class="fas fa-redo"></i> Realizar otra carga
+            </a>
+        </div>
+        {% else %}
+
+        <!-- Descargar Plantillas -->
+        <div class="templates-section">
+            <h5><i class="fas fa-download" style="color:var(--accent)"></i> 1. Descarga la plantilla</h5>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">
+                Descarga la plantilla, llénala con tus productos y luego súbela.
+            </p>
+            <div class="template-buttons">
+                <a href="/panel/carga-masiva/plantilla/excel/" class="btn-template excel">
+                    <i class="fas fa-file-excel"></i>
+                    <div>
+                        <strong>Plantilla Excel (.xlsx)</strong>
+                        <small>Recomendado — incluye formato y colores</small>
+                    </div>
+                </a>
+                <a href="/panel/carga-masiva/plantilla/csv/" class="btn-template csv">
+                    <i class="fas fa-file-csv"></i>
+                    <div>
+                        <strong>Plantilla CSV (.csv)</strong>
+                        <small>Archivo de texto separado por punto y coma</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <hr style="border-color:var(--border-color); margin:2rem 0;">
+
+        <!-- Subir Archivo -->
+        <div class="upload-section">
+            <h5><i class="fas fa-upload" style="color:var(--accent)"></i> 2. Sube tu archivo</h5>
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+
+                <div class="file-drop-zone" id="dropZone">
+                    <div class="drop-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p class="drop-text">Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                    <p class="drop-hint">Formatos aceptados: .xlsx, .csv — Máx. 5MB</p>
+                    <input type="file" name="archivo" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                    <div class="file-selected" id="fileSelected" style="display:none;">
+                        <i class="fas fa-file-check"></i>
+                        <span id="fileName"></span>
+                        <button type="button" id="removeFile" class="btn-remove-file">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary-upload" id="btnUpload" disabled>
+                    <i class="fas fa-upload"></i> Importar Productos
+                </button>
+            </form>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<!-- Card de Instrucciones -->
+<div class="upload-card mt-3">
+    <div class="upload-card-body">
+        <h5 style="color:var(--text-primary); margin-bottom:1rem;">
+            <i class="fas fa-book" style="color:var(--accent);"></i> Instrucciones
+        </h5>
+        <div class="instructions-grid">
+            <div class="instruction-item">
+                <div class="instruction-icon"><i class="fas fa-columns"></i></div>
+                <div>
+                    <strong>Columnas obligatorias</strong>
+                    <p>nombre, precio</p>
+                </div>
+            </div>
+            <div class="instruction-item">
+                <div class="instruction-icon"><i class="fas fa-columns"></i></div>
+                <div>
+                    <strong>Columnas opcionales</strong>
+                    <p>codigo, marca, unidad, categoria, estado, stock, stock_minimo, stock_maximo, ubicacion, resumen</p>
+                </div>
+            </div>
+            <div class="instruction-item">
+                <div class="instruction-icon"><i class="fas fa-tag"></i></div>
+                <div>
+                    <strong>Categoría</strong>
+                    <p>Debe coincidir exactamente con el nombre de una categoría existente</p>
+                </div>
+            </div>
+            <div class="instruction-item">
+                <div class="instruction-icon"><i class="fas fa-toggle-on"></i></div>
+                <div>
+                    <strong>Estado</strong>
+                    <p>Usar "Activo" o "Inactivo" (por defecto: Activo)</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:1rem; padding:12px 16px; background:var(--bg-secondary); border-radius:8px; border-left:4px solid #ff9800;">
+            <p style="margin:0; font-size:0.85rem; color:var(--text-secondary);">
+                <i class="fas fa-exclamation-triangle" style="color:#ff9800; margin-right:6px;"></i>
+                <strong>Categorías disponibles:</strong>
+                {% for c in categorias %}
+                <span class="badge-cat">{{ c.categoria_nombre }}</span>
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .upload-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        animation: fadeInUp 0.4s ease;
+    }
+    .upload-card-header {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        padding: 14px 20px;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .upload-card-header i { margin-right: 8px; }
+    .upload-card-body { padding: 28px; }
+
+    .templates-section h5, .upload-section h5 {
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .template-buttons {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .btn-template {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: white;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        flex: 1;
+        min-width: 250px;
+    }
+    .btn-template i {
+        font-size: 2rem;
+    }
+    .btn-template small {
+        display: block;
+        opacity: 0.85;
+        font-size: 0.78rem;
+        margin-top: 2px;
+    }
+    .btn-template.excel {
+        background: linear-gradient(135deg, #217346, #2ecc71);
+    }
+    .btn-template.csv {
+        background: linear-gradient(135deg, #0d47a1, #1976d2);
+    }
+    .btn-template:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .file-drop-zone {
+        border: 2.5px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    .file-drop-zone:hover, .file-drop-zone.dragover {
+        border-color: var(--accent);
+        background: rgba(102, 126, 234, 0.05);
+    }
+    .drop-icon {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        transition: color 0.3s;
+    }
+    .file-drop-zone:hover .drop-icon { color: var(--accent); }
+    .drop-text {
+        font-size: 1rem;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .drop-hint {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    .file-selected {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(39,174,96,0.1);
+        color: #27ae60;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        margin-top: 12px;
+    }
+    .btn-remove-file {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 2px 6px;
+    }
+
+    .btn-primary-upload {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-primary-upload:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(39,174,96,0.4);
+    }
+    .btn-primary-upload:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .upload-result {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    .upload-result-icon {
+        font-size: 4rem;
+        color: #27ae60;
+        margin-bottom: 1rem;
+        animation: bounceIn 0.6s ease;
+    }
+    .upload-result h3 {
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    .upload-result p {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .instructions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    .instruction-item {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .instruction-icon {
+        width: 36px;
+        height: 36px;
+        background: rgba(102,126,234,0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+    .instruction-item strong {
+        color: var(--text-primary);
+        font-size: 0.88rem;
+    }
+    .instruction-item p {
+        color: var(--text-secondary);
+        font-size: 0.82rem;
+        margin: 2px 0 0;
+    }
+
+    .badge-cat {
+        display: inline-block;
+        background: rgba(102,126,234,0.15);
+        color: var(--accent);
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 2px;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounceIn {
+        0% { transform: scale(0); opacity: 0; }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileSelected = document.getElementById('fileSelected');
+    const fileName = document.getElementById('fileName');
+    const removeFile = document.getElementById('removeFile');
+    const btnUpload = document.getElementById('btnUpload');
+
+    if (!dropZone) return;
+
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // Drag & drop
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            showFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            showFile(this.files[0]);
+        }
+    });
+
+    function showFile(file) {
+        const validExts = ['.csv', '.xlsx', '.xls'];
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (!validExts.includes(ext)) {
+            alert('Formato no soportado. Usa archivos .csv o .xlsx');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('El archivo es demasiado grande. Máximo 5MB.');
+            return;
+        }
+        fileName.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        fileSelected.style.display = 'inline-flex';
+        btnUpload.disabled = false;
+    }
+
+    removeFile.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fileInput.value = '';
+        fileSelected.style.display = 'none';
+        btnUpload.disabled = true;
+    });
+})();
+</script>
+{% endblock %}

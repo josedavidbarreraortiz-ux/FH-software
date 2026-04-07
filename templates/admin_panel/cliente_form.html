@@ -1,0 +1,40 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ titulo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-users" style="color:var(--accent)"></i> {{ titulo }}</h1>
+    <a href="/panel/clientes/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+<div class="card-fh" style="max-width:600px">
+    <div class="card-body" style="padding:2rem">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label-fh">Nombre</label>
+                <input type="text" name="nombre" class="form-control-fh" value="{{ cliente.cliente_nombre|default:'' }}"
+                    required>
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Documento</label>
+                <input type="text" name="documento" class="form-control-fh"
+                    value="{{ cliente.cliente_numero_documento|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Teléfono</label>
+                <input type="text" name="telefono" class="form-control-fh"
+                    value="{{ cliente.cliente_telefono|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Email</label>
+                <input type="email" name="email" class="form-control-fh" value="{{ cliente.cliente_email|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Dirección</label>
+                <input type="text" name="direccion" class="form-control-fh"
+                    value="{{ cliente.cliente_direccion|default:'' }}">
+            </div>
+            <button type="submit" class="btn-primary-fh"><i class="fas fa-save"></i> Guardar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

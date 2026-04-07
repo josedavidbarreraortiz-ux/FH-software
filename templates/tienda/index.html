@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FH - Los Mejores Productos Tecnológicos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="main-nav-container">
+            <a href="/" class="logo">FH</a>
+
+            <ul class="nav-links-main">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="/productos/">Productos</a></li>
+                <li><a href="#caracteristicas">Características</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+
+            <div class="header-icons">
+                {% if request.session.user_id %}
+                <a href="/perfil/" class="header-icon-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>{{ request.session.user_name }}</span>
+                </a>
+                <div class="icon-divider"></div>
+                <a href="/carrito/" class="header-icon-item">
+                    <i class="fa-solid fa-shopping-cart"></i>
+                    <span>Mi carrito</span>
+                    {% if request.session.carrito %}
+                    <span class="badge-cart-header">{{ request.session.carrito|length }}</span>
+                    {% endif %}
+                </a>
+                <div class="icon-divider"></div>
+                <a href="/pedidos/" class="header-icon-item">
+                    <i class="fa-solid fa-box"></i>
+                    <span>Pedidos</span>
+                </a>
+                {% if request.session.user_role == 'ADMIN' %}
+                <div class="icon-divider"></div>
+                <a href="/panel/" class="header-icon-item">
+                    <i class="fa-solid fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                {% endif %}
+                <div class="icon-divider"></div>
+                <a href="/accounts/logout/" class="header-icon-item">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+                {% else %}
+                <a href="/accounts/login/" class="header-icon-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Mi cuenta</span>
+                </a>
+                <div class="icon-divider"></div>
+                <a href="/carrito/" class="header-icon-item">
+                    <i class="fa-solid fa-shopping-cart"></i>
+                    <span>Mi carrito</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Categorías -->
+        <div class="categories-nav">
+            <ul class="categories-list">
+                {% for c in categorias_nav %}
+                <li><a href="/productos/?categoria={{ c.categoria_id }}">{{ c.categoria_nombre }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero" id="inicio">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Tecnología de Vanguardia a tu Alcance</h1>
+                <p>Descubre los últimos celulares, computadores, parlantes y accesorios tech al mejor precio</p>
+                <a href="/productos/" class="cta-button">Explorar Productos</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Productos Destacados -->
+    <section class="products featured-products-section" id="productos">
+        <div class="container">
+            <h2 class="section-title">Nuestros Productos Estrella</h2>
+            <div class="featured-products-grid product-grid">
+                {% for producto in productos %}
+                <div class="product-card">
+                    {% if producto.foto %}
+                    <img src="/media/uploads/productos/{{ producto.foto }}" alt="{{ producto.producto_nombre }}">
+                    {% else %}
+                    <img src="https://placehold.co/300x300/667eea/FFFFFF?text=Producto"
+                        alt="{{ producto.producto_nombre }}">
+                    {% endif %}
+                    <h3>{{ producto.producto_nombre }}</h3>
+                    <p class="description">{{ producto.resumen|default:"" }}</p>
+                    <p class="price">{{ producto.precio_formateado }}</p>
+                    <div class="product-actions">
+                        <a href="/producto/{{ producto.producto_id }}/" class="cta-button">Ver detalles</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="text-align:center; margin-top:3rem;">
+                <a href="/productos/" class="cta-button products-button">Ver todos los productos</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Carousel -->
+    <section class="carousel-section">
+        <div class="container">
+            <h2 class="section-title" style="color: white; margin-bottom: 3rem;">Nuestras Últimas Novedades</h2>
+            <div class="carousel-container">
+                <div class="carousel">
+                    <div class="carousel-slide active">
+                        <img src="https://placehold.co/1000x400/FF6B6B/FFFFFF?text=Ofertas+Especiales"
+                            alt="Oferta especial" class="carousel-image">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://placehold.co/1000x400/667eea/FFFFFF?text=Nuevos+Productos"
+                            alt="Nuevos productos" class="carousel-image">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://placehold.co/1000x400/764ba2/FFFFFF?text=Tecnologia+Avanzada"
+                            alt="Tecnología avanzada" class="carousel-image">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://placehold.co/1000x400/0d47a1/FFFFFF?text=Accesorios+Premium"
+                            alt="Accesorios premium" class="carousel-image">
+                    </div>
+
+                    <button class="carousel-nav carousel-prev" onclick="prevSlide()">‹</button>
+                    <button class="carousel-nav carousel-next" onclick="nextSlide()">›</button>
+
+                    <div class="carousel-indicators">
+                        <span class="carousel-indicator active" onclick="currentSlide(1)"></span>
+                        <span class="carousel-indicator" onclick="currentSlide(2)"></span>
+                        <span class="carousel-indicator" onclick="currentSlide(3)"></span>
+                        <span class="carousel-indicator" onclick="currentSlide(4)"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="action-buttons">
+        <div class="container">
+            <h2 class="section-title">¿Listo para mejorar tu experiencia?</h2>
+            <div class="button-grid">
+                <button class="cta-button secondary-button"
+                    onclick="alert('📍 Visita nuestra tienda en Carrera 15 #93-47, Bogotá')">
+                    <i class="fas fa-store"></i> Solicitar Demo en Tienda
+                </button>
+                <button class="cta-button secondary-button" onclick="alert('📥 Catálogo 2025 disponible próximamente')">
+                    <i class="fas fa-download"></i> Descargar Catálogo 2025
+                </button>
+                <button class="cta-button secondary-button" onclick="alert('📞 Contáctanos al +57 310 123 4567')">
+                    <i class="fas fa-headset"></i> Hablar con Ventas
+                </button>
+                <button class="cta-button secondary-button" onclick="window.location.href='/productos/'">
+                    <i class="fas fa-tags"></i> Ver Precios y Ofertas
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section" id="caracteristicas">
+        <div class="container">
+            <h2 class="section-title">¿Por qué elegir FH?</h2>
+            <div class="features-grid">
+                <div class="feature-item fade-in">
+                    <i class="fas fa-shield-alt icon"></i>
+                    <h3>Seguridad Garantizada</h3>
+                    <p>Compra con confianza, tus datos y transacciones están protegidos con la más alta encriptación.
+                    </p>
+                </div>
+                <div class="feature-item fade-in">
+                    <i class="fas fa-truck icon"></i>
+                    <h3>Envío Rápido y Seguro</h3>
+                    <p>Recibe tus productos en tiempo récord, directamente en la puerta de tu casa.</p>
+                </div>
+                <div class="feature-item fade-in">
+                    <i class="fas fa-award icon"></i>
+                    <h3>Calidad y Garantía</h3>
+                    <p>Solo ofrecemos productos de las mejores marcas, con garantía y soporte postventa.</p>
+                </div>
+                <div class="feature-item fade-in">
+                    <i class="fas fa-headset icon"></i>
+                    <h3>Soporte 24/7</h3>
+                    <p>Nuestro equipo de expertos está siempre disponible para resolver tus dudas y ayudarte.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contacto">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h4>FH TechStore</h4>
+                <p>Tu destino número uno para tecnología de vanguardia.</p>
+                {% if request.session.user_id %}
+                <p style="margin-top:0.5rem;"><i class="fas fa-user"></i> Bienvenido, <strong>{{ request.session.user_name }}</strong></p>
+                <p><i class="fas fa-envelope"></i> {{ request.session.user_email }}</p>
+                {% endif %}
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Productos</h4>
+                <ul>
+                    {% for c in categorias_nav %}
+                    <li><a href="/productos/?categoria={{ c.categoria_id }}">{{ c.categoria_nombre }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Soporte</h4>
+                <ul>
+                    <li><a href="#">Preguntas Frecuentes</a></li>
+                    <li><a href="#">Términos y Condiciones</a></li>
+                    <li><a href="#">Política de Privacidad</a></li>
+                    <li><a href="#">Devoluciones</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contacto</h4>
+                <p><i class="fas fa-map-marker-alt"></i> Carrera 15 #93-47, Bogotá</p>
+                <p><i class="fas fa-phone"></i> +57 310 123 4567</p>
+                <p><i class="fas fa-envelope"></i> info@fh.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 FH. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Floating Buttons -->
+    <div class="floating-buttons">
+        <button class="chat-button" onclick="alert('💬 Chat en vivo próximamente disponible')">
+            <i class="fas fa-comments"></i>
+        </button>
+        <button class="help-button" onclick="alert('❓ ¿Necesitas ayuda? Contáctanos al +57 310 123 4567')">
+            <i class="fas fa-question-circle"></i>
+        </button>
+        <button class="scroll-to-top" onclick="smoothScrollToTop()">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+    </div>
+
+    <script src="{% static 'js/index-script.js' %}"></script>
+</body>
+
+</html>

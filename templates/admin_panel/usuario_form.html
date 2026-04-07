@@ -1,0 +1,46 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ titulo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-user-shield" style="color:var(--accent)"></i> {{ titulo }}</h1>
+    <a href="/panel/usuarios/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+<div class="card-fh" style="max-width:600px">
+    <div class="card-body" style="padding:2rem">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label-fh">Nombre</label>
+                <input type="text" name="name" class="form-control-fh"
+                    value="{{ usuario.name|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Email</label>
+                <input type="email" name="email" class="form-control-fh"
+                    value="{{ usuario.email|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Contraseña {% if usuario %}(dejar vacío para no cambiar){% endif %}</label>
+                <input type="password" name="password" class="form-control-fh" {% if not usuario %}required{% endif %}>
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Rol</label>
+                <select name="role" class="form-control-fh form-select-fh">
+                    <option value="USER" {% if usuario.role == 'USER' %}selected{% endif %}>USER</option>
+                    <option value="ADMIN" {% if usuario.role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
+                </select>
+            </div>
+            {% if usuario %}
+            <div class="form-group">
+                <label class="form-label-fh" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer">
+                    <input type="checkbox" name="enabled" {% if usuario.enabled %}checked{% endif %}
+                        style="width:18px;height:18px;">
+                    Cuenta activa
+                </label>
+            </div>
+            {% endif %}
+            <button type="submit" class="btn-primary-fh"><i class="fas fa-save"></i> Guardar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

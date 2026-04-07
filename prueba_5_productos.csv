@@ -1,0 +1,6 @@
+nombre;codigo;marca;precio;unidad;categoria;estado;stock;stock_minimo;stock_maximo;ubicacion;resumen
+Samsung Galaxy S24 Ultra;SAM-S24U-001;Samsung;5499000;Unidad;Celulares;Activo;12;3;30;Bodega A-1;Smartphone Samsung Galaxy S24 Ultra 256GB
+MacBook Air M3;APP-MBA-M3;Apple;6299000;Unidad;Computadores;Activo;8;2;20;Bodega B-1;Laptop Apple MacBook Air chip M3 15 pulgadas
+Sony WH-1000XM5;SNY-WH5-001;Sony;1450000;Unidad;Audio;Activo;25;5;50;Bodega C-2;Audífonos inalámbricos con cancelación de ruido
+iPad Pro 13 M4;APP-IPD-M4;Apple;7200000;Unidad;Tablets;Activo;6;2;15;Bodega A-3;Tablet Apple iPad Pro 13 pulgadas chip M4
+Control Xbox Elite Series 2;MS-XBX-EL2;Microsoft;750000;Unidad;Gaming;Activo;18;5;40;Bodega D-1;Control inalámbrico Xbox Elite Series 2 Core

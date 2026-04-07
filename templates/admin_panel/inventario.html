@@ -1,0 +1,53 @@
+{% extends 'base_admin.html' %}
+{% block title %}Inventario - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-warehouse" style="color:var(--accent)"></i> Inventario</h1>
+</div>
+<div class="table-container">
+    <table class="table-fh">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Stock Actual</th>
+                <th>Mínimo</th>
+                <th>Máximo</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in inventarios %}
+            <tr>
+                <td>{{ i.inventario_id }}</td>
+                <td style="color:var(--text-primary); font-weight:500">{{ i.producto.producto_nombre|default:"-" }}</td>
+                <td
+                    style="font-weight:600; {% if i.inventario_stock_actual <= i.inventario_stock_minimo %}color:var(--danger){% else %}color:var(--success){% endif %}">
+                    {{ i.inventario_stock_actual|default:0 }}
+                </td>
+                <td>{{ i.inventario_stock_minimo|default:0 }}</td>
+                <td>{{ i.inventario_stock_maximo|default:0 }}</td>
+                <td><span class="badge-fh info">{{ i.inventario_ubicacion|default:"-" }}</span></td>
+                <td>
+                    {% if i.inventario_stock_actual <= i.inventario_stock_minimo %} <span class="badge-fh danger">Stock
+                        Bajo</span>
+                        {% else %}
+                        <span class="badge-fh success">Normal</span>
+                        {% endif %}
+                </td>
+                <td>
+                    <a href="/panel/inventario/{{ i.inventario_id }}/editar/" class="btn-outline-fh btn-sm"><i
+                            class="fas fa-edit"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="empty-state">No hay inventario</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

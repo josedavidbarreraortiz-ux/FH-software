@@ -1,0 +1,152 @@
+{% extends 'base_admin.html' %}
+{% block title %}Detalle Producto - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-box" style="color:var(--accent)"></i> Detalle del Producto</h1>
+    <div style="display:flex; gap:0.5rem;">
+        <a href="/panel/productos/{{ producto.producto_id }}/editar/" class="btn-primary-fh">
+            <i class="fas fa-edit"></i> Editar
+        </a>
+        <a href="/panel/productos/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+    </div>
+</div>
+
+<div class="card-fh" style="max-width:900px">
+    <div class="card-body" style="padding:2rem">
+        <div class="row">
+            <!-- Información del producto -->
+            <div class="col-md-8">
+                <div class="row" style="margin-bottom:1.5rem;">
+                    <div class="col-md-6">
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">ID:</strong>
+                            <span style="color:var(--text-primary)">{{ producto.producto_id }}</span>
+                        </p>
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Nombre:</strong>
+                            <span style="color:var(--text-primary); font-weight:600">{{ producto.producto_nombre }}</span>
+                        </p>
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Código de Barras:</strong>
+                            <span style="color:var(--text-primary)">{{ producto.producto_codigo_bar|default:"N/A" }}</span>
+                        </p>
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Marca:</strong>
+                            <span style="color:var(--text-primary)">{{ producto.producto_marca|default:"N/A" }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Categoría:</strong>
+                            <span class="badge-fh info">{{ producto.categoria.categoria_nombre|default:"N/A" }}</span>
+                        </p>
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Precio de Venta:</strong>
+                            <span style="color:var(--success); font-weight:700; font-size:1.1rem;">{{ producto.precio_formateado }}</span>
+                        </p>
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Tipo de Unidad:</strong>
+                            <span style="color:var(--text-primary)">{{ producto.tipo_unidad|default:"N/A" }}</span>
+                        </p>
+                        <p style="margin-bottom:0.8rem;">
+                            <strong style="color:var(--text-secondary)">Estado:</strong>
+                            {% if producto.producto_estado == 'Activo' %}
+                            <span class="badge-fh success">Activo</span>
+                            {% else %}
+                            <span class="badge-fh danger">Inactivo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Color -->
+                {% if color_nombre %}
+                <p style="margin-bottom:0.8rem;">
+                    <strong style="color:var(--text-secondary)">Color:</strong>
+                    <span class="badge-fh info">{{ color_nombre }}</span>
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Imagen del producto -->
+            <div class="col-md-4">
+                <div style="text-align:center;">
+                    {% if producto.foto %}
+                    <img src="/media/uploads/productos/{{ producto.foto }}" alt="{{ producto.producto_nombre }}"
+                        style="max-height:250px; width:100%; object-fit:contain; border-radius:12px; border:1px solid var(--border); padding:0.5rem; background:var(--bg-card);"
+                        onerror="this.parentElement.innerHTML='<div style=\'min-height:150px; border:1px solid var(--border); border-radius:12px; padding:2rem; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);\'>Sin imagen</div>'">
+                    {% else %}
+                    <div style="min-height:150px; border:1px solid var(--border); border-radius:12px; padding:2rem; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);">
+                        <span><i class="fas fa-image" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i> Sin imagen</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <hr style="border-color:var(--border); margin:1.5rem 0;">
+
+        <!-- Resumen -->
+        {% if producto.resumen %}
+        <div style="margin-bottom:1.5rem;">
+            <h5 style="color:var(--text-primary); margin-bottom:0.5rem;">
+                <i class="fas fa-align-left" style="color:var(--accent)"></i> Resumen
+            </h5>
+            <p style="color:var(--text-secondary); line-height:1.6;">{{ producto.resumen }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Especificaciones -->
+        {% if producto.especificacion %}
+        <div style="margin-bottom:1.5rem;">
+            <h5 style="color:var(--text-primary); margin-bottom:0.5rem;">
+                <i class="fas fa-list-ul" style="color:var(--accent)"></i> Especificaciones
+            </h5>
+            <p style="color:var(--text-secondary); line-height:1.6;">{{ producto.especificacion }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Inventario -->
+        {% if inventario %}
+        <hr style="border-color:var(--border); margin:1.5rem 0;">
+        <h5 style="color:var(--text-primary); margin-bottom:1rem;">
+            <i class="fas fa-boxes" style="color:var(--accent)"></i> Inventario
+        </h5>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card-fh" style="text-align:center; padding:1rem;">
+                    <small style="color:var(--text-secondary)">Stock Actual</small>
+                    <p style="font-size:1.5rem; font-weight:700; color:var(--text-primary); margin:0.25rem 0 0;">
+                        {{ inventario.inventario_stock_actual|default:0 }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-fh" style="text-align:center; padding:1rem;">
+                    <small style="color:var(--text-secondary)">Stock Mínimo</small>
+                    <p style="font-size:1.5rem; font-weight:700; color:var(--warning); margin:0.25rem 0 0;">
+                        {{ inventario.inventario_stock_minimo|default:0 }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-fh" style="text-align:center; padding:1rem;">
+                    <small style="color:var(--text-secondary)">Stock Máximo</small>
+                    <p style="font-size:1.5rem; font-weight:700; color:var(--accent); margin:0.25rem 0 0;">
+                        {{ inventario.inventario_stock_maximo|default:0 }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-fh" style="text-align:center; padding:1rem;">
+                    <small style="color:var(--text-secondary)">Ubicación</small>
+                    <p style="font-size:1.2rem; font-weight:600; color:var(--text-primary); margin:0.25rem 0 0;">
+                        {{ inventario.inventario_ubicacion|default:"--" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Mi Perfil - FH Store{% endblock %}
+{% block content %}
+<div class="container" style="padding:2rem 0">
+    <h1 style="font-size:1.6rem; font-weight:700; margin-bottom:1.5rem"><i class="fas fa-user"
+            style="color:var(--accent)"></i> Mi Perfil</h1>
+    <div class="card-fh" style="max-width:600px">
+        <div class="card-body" style="padding:2rem">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label-fh">Nombre</label>
+                    <input type="text" name="name" class="form-control-fh" value="{{ user.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label-fh">Email</label>
+                    <input type="email" class="form-control-fh" value="{{ user.email }}" disabled>
+                    <small style="color:var(--text-muted)">El email no se puede cambiar</small>
+                </div>
+                {% if cliente %}
+                <div class="form-group">
+                    <label class="form-label-fh">Documento</label>
+                    <input type="text" name="documento" class="form-control-fh"
+                        value="{{ cliente.cliente_numero_documento|default:'' }}">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label-fh">Teléfono</label>
+                            <input type="text" name="telefono" class="form-control-fh"
+                                value="{{ cliente.cliente_telefono|default:'' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label-fh">Dirección</label>
+                            <input type="text" name="direccion" class="form-control-fh"
+                                value="{{ cliente.cliente_direccion|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <button type="submit" class="btn-primary-fh"><i class="fas fa-save"></i> Guardar cambios</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

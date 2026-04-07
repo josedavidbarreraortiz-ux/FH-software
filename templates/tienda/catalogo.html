@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Productos - FH{% endblock %}
+{% block content %}
+<div class="products-section">
+    <div class="container">
+
+        <!-- Page Header -->
+        <div class="products-page-header">
+            <h1>Nuestros Productos</h1>
+            <p>Encuentra exactamente lo que necesitas</p>
+        </div>
+
+        <div class="row">
+
+            <!-- Filters Sidebar -->
+            <div class="col-lg-3 col-md-4">
+                <div class="filters-card">
+                    <h3 class="filters-card-title"><i class="fas fa-sliders-h"></i> Filtros</h3>
+
+                    <form method="get" action="/productos/">
+
+                        <!-- Search by Name -->
+                        <div class="filter-group">
+                            <label class="filter-group-label">Buscar</label>
+                            <input type="text" name="q" class="form-control"
+                                placeholder="Nombre del producto" value="{{ busqueda }}">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="filter-group">
+                            <label class="filter-group-label">Categoría</label>
+                            <select name="categoria" class="form-select">
+                                <option value="">Todas las categorías</option>
+                                {% for c in categorias %}
+                                <option value="{{ c.categoria_id }}"
+                                    {% if categoria_actual == c.categoria_id %}selected{% endif %}>
+                                    {{ c.categoria_nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Price Min -->
+                        <div class="filter-group">
+                            <label class="filter-group-label">Precio Mínimo</label>
+                            <input type="number" name="precio_min" class="form-control"
+                                placeholder="$0" value="{{ precio_min_val }}" step="1000">
+                        </div>
+
+                        <!-- Price Max -->
+                        <div class="filter-group">
+                            <label class="filter-group-label">Precio Máximo</label>
+                            <input type="number" name="precio_max" class="form-control"
+                                placeholder="$999.999" value="{{ precio_max_val }}" step="1000">
+                        </div>
+
+                        <!-- Sort -->
+                        <div class="filter-group">
+                            <label class="filter-group-label">Ordenar por</label>
+                            <select name="orden" class="form-select">
+                                <option value="" {% if not orden %}selected{% endif %}>Por defecto</option>
+                                <option value="precio_asc" {% if orden == 'precio_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
+                                <option value="precio_desc" {% if orden == 'precio_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                                <option value="nombre_asc" {% if orden == 'nombre_asc' %}selected{% endif %}>Nombre: A - Z</option>
+                                <option value="nombre_desc" {% if orden == 'nombre_desc' %}selected{% endif %}>Nombre: Z - A</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter Buttons -->
+                        <button type="submit" class="btn btn-filter-apply">
+                            <i class="fas fa-search"></i> Aplicar Filtros
+                        </button>
+                        <a href="/productos/" class="btn btn-filter-clear">
+                            <i class="fas fa-times-circle"></i> Limpiar
+                        </a>
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="col-lg-9 col-md-8">
+
+                <!-- Products Found -->
+                {% if productos %}
+                <div class="row g-4">
+                    {% for p in productos %}
+                    <div class="col-lg-4 col-md-6 col-sm-6">
+                        <a href="/producto/{{ p.producto_id }}/" class="product-card-link">
+                            <div class="product-card">
+                                <div class="card-img-wrapper">
+                                    {% if p.foto %}
+                                    <img src="/media/uploads/productos/{{ p.foto }}" alt="{{ p.producto_nombre }}">
+                                    {% else %}
+                                    <img src="https://placehold.co/300x300/667eea/FFFFFF?text=Sin+Imagen" alt="{{ p.producto_nombre }}">
+                                    {% endif %}
+                                    <span class="product-badge-new">Nuevo</span>
+                                </div>
+                                <div class="card-body-custom">
+                                    <span class="badge-cat">{{ p.categoria.categoria_nombre|default:"Sin categoría" }}</span>
+                                    <h3>{{ p.producto_nombre }}</h3>
+                                    <span class="price">{{ p.precio_formateado }}</span>
+                                </div>
+                                <div class="card-footer-custom">
+                                    <span class="btn-view-detail">
+                                        <i class="fas fa-eye"></i> Ver Detalle
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- No Products Found -->
+                <div class="no-products-found">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No se encontraron productos</h3>
+                    <p>Intenta ajustar los filtros de búsqueda</p>
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

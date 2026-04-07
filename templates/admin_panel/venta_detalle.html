@@ -1,0 +1,46 @@
+{% extends 'base_admin.html' %}
+{% block title %}Venta #{{ venta.venta_codigo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-receipt" style="color:var(--accent)"></i> Venta #{{ venta.venta_codigo }}</h1>
+    <a href="/panel/ventas/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card-fh">
+            <div class="card-body">
+                <h6 style="color:var(--text-muted); margin-bottom:1rem">Información</h6>
+                <p class="product-spec"><strong>Cliente:</strong> {{ venta.cliente.cliente_nombre|default:"-" }}</p>
+                <p class="product-spec"><strong>Fecha:</strong> {{ venta.venta_fecha }} {{ venta.venta_hora|time:"H:i" }}</p>
+                <p class="product-spec"><strong>Método de pago:</strong> {{ venta.metodo_pago.metodo_pago_nombre|default:"-" }}</p>
+                <p class="product-spec"><strong>Observaciones:</strong> {{ venta.observaciones|default:"Ninguna" }}</p>
+                <p style="margin-top:1rem"><strong>Total:</strong> <span class="product-price-big">{{ venta.total_formateado }}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="table-container">
+            <table class="table-fh">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in detalles %}
+                    <tr>
+                        <td style="color:var(--text-primary)">{{ d.producto.producto_nombre|default:"-" }}</td>
+                        <td>{{ d.venta_detalle_cantidad }}</td>
+                        <td>${{ d.venta_detalle_precio_venta|floatformat:0 }}</td>
+                        <td style="color:var(--success); font-weight:600">${{ d.subtotal|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

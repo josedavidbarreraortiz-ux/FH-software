@@ -1,0 +1,46 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ titulo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-exchange-alt" style="color:var(--accent)"></i> {{ titulo }}</h1>
+    <a href="/panel/movimientos/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+<div class="card-fh" style="max-width:600px">
+    <div class="card-body" style="padding:2rem">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label-fh">Producto</label>
+                <select name="producto" class="form-control-fh form-select-fh" required>
+                    <option value="">-- Seleccionar producto --</option>
+                    {% for p in productos %}
+                    <option value="{{ p.producto_id }}">{{ p.producto_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label-fh">Tipo</label>
+                        <select name="tipo" class="form-control-fh form-select-fh" required>
+                            <option value="ENTRADA">ENTRADA</option>
+                            <option value="SALIDA">SALIDA</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label-fh">Cantidad</label>
+                        <input type="number" name="cantidad" class="form-control-fh" min="1" value="1" required>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Motivo</label>
+                <input type="text" name="motivo" class="form-control-fh" placeholder="Razón del movimiento">
+            </div>
+            <button type="submit" class="btn-primary-fh"><i class="fas fa-save"></i> Registrar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

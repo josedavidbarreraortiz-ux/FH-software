@@ -1,0 +1,46 @@
+{% extends 'base_admin.html' %}
+{% block title %}Categorías - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-tags" style="color:var(--accent)"></i> Categorías</h1>
+    <a href="/panel/categorias/crear/" class="btn-primary-fh"><i class="fas fa-plus"></i> Nueva Categoría</a>
+</div>
+<div class="table-container">
+    <table class="table-fh">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in categorias %}
+            <tr>
+                <td>{{ c.categoria_id }}</td>
+                <td style="color:var(--text-primary); font-weight:500">{{ c.categoria_nombre }}</td>
+                <td>{{ c.descripcion|default:"-" }}</td>
+                <td>{% if c.estado == 1 %}<span class="badge-fh success">Activo</span>{% else %}<span
+                        class="badge-fh danger">Inactivo</span>{% endif %}</td>
+                <td>
+                    <a href="/panel/categorias/{{ c.categoria_id }}/editar/" class="btn-outline-fh btn-sm"><i
+                            class="fas fa-edit"></i></a>
+                    <form method="post" action="/panel/categorias/{{ c.categoria_id }}/eliminar/" style="display:inline"
+                        onsubmit="return confirmDelete(this, '{{ c.categoria_nombre }}')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-danger-fh btn-sm"><i
+                                class="fas fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-state">No hay categorías</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

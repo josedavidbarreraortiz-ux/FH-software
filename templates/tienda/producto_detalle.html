@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ producto.producto_nombre }} - FH{% endblock %}
+{% block content %}
+<div class="checkout-wrapper">
+    <div class="container">
+        <nav style="margin-bottom:1rem;font-size:0.85rem">
+            <a href="/" style="color:#64748b;text-decoration:none">Inicio</a>
+            <span style="color:#94a3b8;margin:0 6px">/</span>
+            <a href="/productos/" style="color:#64748b;text-decoration:none">Productos</a>
+            <span style="color:#94a3b8;margin:0 6px">/</span>
+            <span style="color:#2d3748;font-weight:600">{{ producto.producto_nombre }}</span>
+        </nav>
+        <div class="row g-3">
+            <div class="col-lg-5 col-md-6">
+                <div style="background:white;border-radius:14px;padding:15px;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+                    {% if producto.foto %}
+                    <img src="/media/uploads/productos/{{ producto.foto }}" alt="{{ producto.producto_nombre }}" style="width:100%;max-height:320px;object-fit:contain;border-radius:10px">
+                    {% else %}
+                    <div style="width:100%;height:280px;background:#f1f5f9;border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fas fa-mobile-alt" style="font-size:4rem;color:#94a3b8"></i></div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-7 col-md-6">
+                <div style="background:white;border-radius:14px;padding:22px;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+                    <div class="category-badge-detail" style="font-size:0.78rem;padding:4px 10px"><i class="fas fa-tag" style="margin-right:5px"></i>{{ categoria_nombre }}</div>
+                    <h1 style="font-size:1.5rem;font-weight:800;color:#2d3748;margin:8px 0 4px">{{ producto.producto_nombre }}</h1>
+                    {% if producto.producto_marca %}
+                    <p style="color:#64748b;margin-bottom:1rem;font-size:0.9rem"><strong>Marca:</strong> {{ producto.producto_marca }}</p>
+                    {% endif %}
+                    {% if stock > 0 %}
+                    <div class="stock-status-ok" style="font-size:0.82rem;padding:5px 12px"><i class="fas fa-check-circle"></i> Disponible ({{ stock }} unidades)</div>
+                    {% else %}
+                    <div class="stock-status-out" style="font-size:0.82rem;padding:5px 12px"><i class="fas fa-times-circle"></i> Agotado</div>
+                    {% endif %}
+                    <div style="font-size:1.6rem;font-weight:800;color:#667eea;margin:0.8rem 0">{{ producto.precio_formateado }}</div>
+                    {% if producto.resumen %}
+                    <div style="margin-bottom:0.8rem"><h5 style="color:#2d3748;font-weight:700;margin-bottom:3px;font-size:0.92rem">Descripción</h5><p style="color:#64748b;font-size:0.88rem;margin:0">{{ producto.resumen }}</p></div>
+                    {% endif %}
+                    {% if producto.especificacion %}
+                    <div style="margin-bottom:0.8rem"><h5 style="color:#2d3748;font-weight:700;margin-bottom:3px;font-size:0.92rem">Especificaciones</h5><p style="color:#64748b;font-size:0.88rem;margin:0">{{ producto.especificacion }}</p></div>
+                    {% endif %}
+                    {% if color %}
+                    <p style="color:#64748b;font-size:0.88rem"><strong>Color:</strong> {{ color }}</p>
+                    {% endif %}
+                    {% if stock > 0 %}
+                        {% if request.session.user_id %}
+                        <form method="post" action="/carrito/agregar/{{ producto.producto_id }}/" style="margin-top:1rem">
+                            {% csrf_token %}
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                                <label style="font-weight:600;color:#2d3748;font-size:0.88rem">Cantidad</label>
+                                <div class="quantity-controls">
+                                    <button type="button" class="qty-btn" onclick="var i=document.getElementById('qi');if(parseInt(i.value)>1)i.value=parseInt(i.value)-1"><i class="fas fa-minus"></i></button>
+                                    <input type="number" name="cantidad" id="qi" value="1" min="1" max="{{ stock }}" class="qty-value-input" readonly>
+                                    <button type="button" class="qty-btn" onclick="var i=document.getElementById('qi');if(parseInt(i.value)<{{ stock }})i.value=parseInt(i.value)+1"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit" style="width:100%;padding:0.55rem 1rem;font-size:0.9rem"><i class="fas fa-cart-plus" style="margin-right:8px"></i>Agregar al Carrito</button>
+                        </form>
+                        {% else %}
+                        <div style="margin-top:1rem">
+                            <a href="/accounts/login/" class="btn-submit" style="text-decoration:none;width:100%;display:flex;padding:0.55rem 1rem;font-size:0.9rem"><i class="fas fa-sign-in-alt" style="margin-right:8px"></i>Inicia sesión para comprar</a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div style="background:#fff5f5;border:2px solid #fed7d7;border-radius:10px;padding:12px;margin-top:1rem;text-align:center;font-size:0.88rem"><i class="fas fa-exclamation-triangle" style="color:#e53e3e;margin-right:6px"></i>Este producto no está disponible actualmente.</div>
+                    {% endif %}
+                    <div class="product-features-grid" style="margin-top:1rem;gap:8px">
+                        <div class="pf-item" style="padding:8px"><i class="fas fa-truck"></i><span>Envío rápido</span></div>
+                        <div class="pf-item" style="padding:8px"><i class="fas fa-shield-alt"></i><span>Garantía</span></div>
+                        <div class="pf-item" style="padding:8px"><i class="fas fa-undo"></i><span>Devoluciones</span></div>
+                        <div class="pf-item" style="padding:8px"><i class="fas fa-credit-card"></i><span>Pago seguro</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

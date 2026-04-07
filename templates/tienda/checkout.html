@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}Finalizar Compra - FH TechStore{% endblock %}
+{% block content %}
+<div class="checkout-wrapper">
+    <div class="container">
+        <div class="checkout-header">
+            <h1 class="checkout-title"><i class="fas fa-bag-shopping" style="margin-right:12px"></i>Finalizar Compra</h1>
+            <p class="checkout-subtitle">Completa tus datos para procesar tu pedido</p>
+        </div>
+
+        {% if not items %}
+        <div class="empty-cart">
+            <div class="empty-cart-icon"><i class="fas fa-cart-arrow-down"></i></div>
+            <h3>No hay productos para procesar</h3>
+            <p>Agrega productos a tu carrito antes de continuar</p>
+            <a href="/productos/" class="btn-submit" style="display:inline-flex;width:auto;padding:15px 40px;text-decoration:none"><i class="fas fa-bag-shopping" style="margin-right:8px"></i>Explorar Productos</a>
+        </div>
+        {% else %}
+        <form method="post" action="/checkout/" id="checkoutForm" novalidate>
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <!-- Progress Steps -->
+                    <div class="progress-steps">
+                        <div class="step active"><div class="step-number">1</div><span>Datos</span></div>
+                        <div class="step-line"></div>
+                        <div class="step"><div class="step-number">2</div><span>Pago</span></div>
+                        <div class="step-line"></div>
+                        <div class="step"><div class="step-number">3</div><span>Confirmar</span></div>
+                    </div>
+
+                    <!-- Customer Information -->
+                    <div class="checkout-card">
+                        <div class="card-header-custom">
+                            <div class="header-icon"><i class="fas fa-user-circle"></i></div>
+                            <div><h3>Informaci&oacute;n Personal</h3><p>Ingresa tus datos de contacto</p></div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group" id="nombre-group">
+                                <label for="nombre">Nombre Completo <span class="required">*</span></label>
+                                <div class="input-wrapper" id="nombre-wrapper">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="nombre" name="nombre" value="{{ cliente.cliente_nombre|default_if_none:'' }}" placeholder="Ej: Juan P&eacute;rez" required>
+                                </div>
+                                <span class="error-message">M&iacute;nimo 4 caracteres, solo letras y espacios</span>
+                                
+                            </div>
+
+                            <div class="form-group" id="email-group">
+                                <label for="email">Correo Electr&oacute;nico <span class="required">*</span></label>
+                                <div class="input-wrapper" id="email-wrapper">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="email" name="email" value="{{ cliente.cliente_email|default_if_none:'' }}" placeholder="correo@ejemplo.com" required>
+                                </div>
+                                <span class="error-message">Ingresa un correo v&aacute;lido</span>
+                            </div>
+
+                            <div class="form-group" id="telefono-group">
+                                <label for="telefono">Tel&eacute;fono <span class="required">*</span></label>
+                                <div class="input-wrapper" id="telefono-wrapper">
+                                    <i class="fas fa-phone"></i>
+                                    <input type="tel" id="telefono" name="telefono" value="{{ cliente.cliente_telefono|default_if_none:'' }}" placeholder="3001234567" required maxlength="10" minlength="10">
+                                </div>
+                                <span class="error-message">Debe tener exactamente 10 d&iacute;gitos</span>
+                                <span class="hint-message">Ejemplo: 3001234567</span>
+                            </div>
+
+                            <div class="form-group" id="documento-group">
+                                <label for="documento">Documento <span class="required">*</span></label>
+                                <div class="input-wrapper" id="documento-wrapper">
+                                    <i class="fas fa-id-card"></i>
+                                    <input type="text" id="documento" name="documento" value="{{ cliente.cliente_numero_documento|default_if_none:'' }}" placeholder="1234567890" required maxlength="12" minlength="6">
+                                </div>
+                                <span class="error-message">Entre 6 y 12 d&iacute;gitos</span>
+                                <span class="hint-message">CC o NIT sin puntos ni guiones</span>
+                            </div>
+
+                            <div class="form-group full-width" id="direccion-group">
+                                <label for="direccion">Direcci&oacute;n de Env&iacute;o <span class="required">*</span></label>
+                                <div class="input-wrapper" id="direccion-wrapper">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <textarea id="direccion" name="direccion" placeholder="Ej: Calle 123 #45-67, Apto 101" required>{{ cliente.cliente_direccion|default_if_none:"" }}</textarea>
+                                </div>
+                                <span class="error-message">M&iacute;nimo 5 caracteres y al menos 1 n&uacute;mero</span>
+                                <span class="hint-message">Incluye calle, n&uacute;mero, ciudad</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="checkout-card">
+                        <div class="card-header-custom">
+                            <div class="header-icon"><i class="fas fa-credit-card"></i></div>
+                            <div><h3>M&eacute;todo de Pago</h3><p>Selecciona c&oacute;mo deseas pagar</p></div>
+                        </div>
+                        <div class="security-badge">
+                            <i class="fas fa-shield-alt" style="font-size:2rem;color:#22c55e"></i>
+                            <div><strong>Pago 100% Seguro</strong><span>Tus datos est&aacute;n protegidos</span></div>
+                        </div>
+                        <div class="payment-methods">
+                            {% for m in metodos_pago %}
+                            <label class="payment-option">
+                                <input type="radio" name="metodo_pago" value="{{ m.metodo_pago_id }}" {% if forloop.first %}checked{% endif %} required>
+                                <div class="payment-card">
+                                    <div class="payment-icon"><i class="fas fa-credit-card"></i></div>
+                                    <span class="payment-name">{{ m.metodo_pago_nombre }}</span>
+                                    <div class="payment-check"><i class="fas fa-check-circle"></i></div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" style="margin-top:20px;display:flex;align-items:center;justify-content:center">
+                        <i class="fas fa-lock" style="margin-right:8px"></i>Confirmar y Pagar
+                    </button>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-lg-5">
+                    <div class="summary-card">
+                        <h2 class="summary-title"><i class="fas fa-receipt" style="margin-right:8px;color:#667eea"></i>Resumen del Pedido</h2>
+                        <div class="summary-items">
+                            {% for item in items %}
+                            <div class="summary-item">
+                                <div class="item-image">
+                                    {% if item.producto.foto %}
+                                    <img src="/media/uploads/productos/{{ item.producto.foto }}" alt="{{ item.producto.producto_nombre }}">
+                                    {% else %}
+                                    <img src="https://placehold.co/60x60/667eea/FFFFFF?text=P" alt="Producto">
+                                    {% endif %}
+                                    <span class="qty-badge">{{ item.cantidad }}</span>
+                                </div>
+                                <div class="item-info">
+                                    <span class="item-name">{{ item.producto.producto_nombre }}</span>
+                                    <span class="item-price">${{ item.subtotal|floatformat:0 }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="summary-totals">
+                            <div class="totals-row"><span>Subtotal</span><span>{{ total_formateado }}</span></div>
+                            <div class="totals-row"><span>Env&iacute;o</span><span class="free-text"><i class="fas fa-truck" style="margin-right:4px"></i>Gratis</span></div>
+                            <div class="totals-row total-row"><span>Total</span><span class="total-amount">{{ total_formateado }} COP</span></div>
+                        </div>
+                        <a href="/carrito/" class="btn-back"><i class="fas fa-arrow-left" style="margin-right:8px"></i>Volver al Carrito</a>
+                        <div class="trust-badges">
+                            <div class="trust-item"><i class="fas fa-shield-alt"></i><span>Seguro</span></div>
+                            <div class="trust-item"><i class="fas fa-truck"></i><span>Gratis</span></div>
+                            <div class="trust-item"><i class="fas fa-undo"></i><span>Devoluci&oacute;n</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('checkoutForm');
+    if (!form) return;
+    var validators = {
+        nombre: function(v) { return /^[a-zA-Z\u00C0-\u024F\s]{4,}$/.test(v.trim()); },
+        email: function(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); },
+        telefono: function(v) { return /^[0-9]{10}$/.test(v.trim()); },
+        documento: function(v) { return /^[0-9]{6,12}$/.test(v.trim()); },
+        direccion: function(v) { var t = v.trim(); return t.length >= 5 && /[0-9]/.test(t); }
+    };
+    function validate(id) {
+        var el = document.getElementById(id);
+        if (!el) return true;
+        if (el.readOnly) { document.getElementById(id + '-wrapper').classList.add('success'); return true; }
+        var wrapper = document.getElementById(id + '-wrapper');
+        var group = document.getElementById(id + '-group');
+        if (!wrapper || !group) return true;
+        var valid = validators[id] ? validators[id](el.value) : true;
+        wrapper.classList.remove('error', 'success');
+        group.classList.remove('has-error');
+        if (el.value.length > 0) {
+            if (valid) wrapper.classList.add('success');
+            else { wrapper.classList.add('error'); group.classList.add('has-error'); }
+        }
+        return valid;
+    }
+    ['telefono','documento'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && !el.readOnly) {
+            el.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); validate(id); });
+            el.addEventListener('blur', function() { validate(id); });
+        }
+    });
+    ['nombre','email','direccion'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && !el.readOnly) {
+            el.addEventListener('input', function() { validate(id); });
+            el.addEventListener('blur', function() { validate(id); });
+        }
+    });
+    ['nombre','email'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.readOnly && el.value.length > 0) {
+            document.getElementById(id + '-wrapper').classList.add('success');
+        }
+    });
+    form.addEventListener('submit', function(e) {
+        var valid = true;
+        ['nombre','email','telefono','documento','direccion'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el && !el.readOnly && !validate(id)) valid = false;
+        });
+        if (!valid) {
+            e.preventDefault();
+            var err = document.querySelector('.form-group.has-error');
+            if (err) err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+});
+</script>
+{% endblock %}

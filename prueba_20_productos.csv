@@ -1,0 +1,21 @@
+nombre;codigo;marca;precio;unidad;categoria;estado;stock;stock_minimo;stock_maximo;ubicacion;resumen
+iPhone 16 Pro Max;APP-IP16PM;Apple;6899000;Unidad;Celulares;Activo;15;3;30;Bodega A-1;Apple iPhone 16 Pro Max 256GB Titanio Natural
+Samsung Galaxy Z Fold 6;SAM-ZF6-001;Samsung;8299000;Unidad;Celulares;Activo;5;2;15;Bodega A-1;Samsung Galaxy Z Fold 6 512GB plegable
+Xiaomi 14 Ultra;XIA-14U-001;Xiaomi;4200000;Unidad;Celulares;Activo;20;5;40;Bodega A-2;Xiaomi 14 Ultra con cámara Leica
+Google Pixel 9 Pro;GOO-PX9P;Google;4599000;Unidad;Celulares;Activo;10;3;25;Bodega A-2;Google Pixel 9 Pro con Tensor G4
+Lenovo ThinkPad X1 Carbon;LEN-X1C-G12;Lenovo;7500000;Unidad;Computadores;Activo;7;2;15;Bodega B-1;Laptop empresarial Lenovo ThinkPad X1 Carbon Gen 12
+HP Spectre x360;HP-SPX360;HP;5800000;Unidad;Computadores;Activo;9;3;20;Bodega B-1;HP Spectre x360 convertible 14 pulgadas OLED
+ASUS ROG Strix G16;ASUS-ROG-G16;ASUS;6200000;Unidad;Gaming;Activo;6;2;12;Bodega B-2;Laptop gamer ASUS ROG Strix G16 RTX 4070
+Dell XPS 15;DELL-XPS15;Dell;6100000;Unidad;Computadores;Activo;8;2;18;Bodega B-2;Dell XPS 15 Intel Core Ultra 9
+AirPods Pro 2;APP-APP2-USB;Apple;990000;Unidad;Audio;Activo;35;10;60;Bodega C-1;Apple AirPods Pro 2da generación USB-C
+JBL Charge 5;JBL-CHG5;JBL;480000;Unidad;Audio;Activo;22;8;50;Bodega C-1;Parlante portátil JBL Charge 5 resistente al agua
+Samsung Galaxy Buds3 Pro;SAM-GB3P;Samsung;850000;Unidad;Audio;Activo;28;8;45;Bodega C-2;Audífonos Samsung Galaxy Buds3 Pro con ANC
+Cargador Anker 65W GaN;ANK-65W-GAN;Anker;120000;Unidad;Accesorios;Activo;50;15;100;Bodega D-1;Cargador rápido Anker 65W GaN USB-C
+Logitech MX Master 3S;LOG-MXM3S;Logitech;450000;Unidad;Accesorios;Activo;30;10;60;Bodega D-1;Mouse inalámbrico Logitech MX Master 3S ergonómico
+Samsung Galaxy Tab S10;SAM-GTS10;Samsung;3800000;Unidad;Tablets;Activo;8;3;20;Bodega A-3;Samsung Galaxy Tab S10 Ultra 14.6 pulgadas
+Apple Watch Ultra 2;APP-AWU2;Apple;3600000;Unidad;Wearables;Activo;10;3;20;Bodega E-1;Apple Watch Ultra 2 GPS + Cellular 49mm Titanio
+Samsung Galaxy Watch 7;SAM-GW7;Samsung;1350000;Unidad;Wearables;Activo;14;5;30;Bodega E-1;Samsung Galaxy Watch 7 44mm Bluetooth
+PlayStation 5 Slim;SONY-PS5S;Sony;2300000;Unidad;Gaming;Activo;12;4;25;Bodega F-1;Consola Sony PlayStation 5 Slim edición digital
+Nintendo Switch OLED;NTD-SWOLED;Nintendo;1750000;Unidad;Gaming;Activo;15;5;30;Bodega F-1;Nintendo Switch modelo OLED pantalla 7 pulgadas
+Echo Dot 5ta Gen;AMZ-ED5;Amazon;180000;Unidad;Hogar;Activo;40;10;80;Bodega G-1;Altavoz inteligente Amazon Echo Dot 5ta generación
+Google Nest Hub 2;GOO-NH2;Google;350000;Unidad;Hogar;Activo;18;5;35;Bodega G-1;Pantalla inteligente Google Nest Hub 2da generación

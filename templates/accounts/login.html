@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - FH</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">FH</h1>
+            <p class="auth-subtitle">Ingresa a tu cuenta</p>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert-fh {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+                <i
+                    class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label-fh">Correo electrónico</label>
+                    <input type="email" name="email" class="form-control-fh" placeholder="tu@email.com" required
+                        autofocus>
+                </div>
+                <div class="form-group">
+                    <label class="form-label-fh">Contraseña</label>
+                    <input type="password" name="password" class="form-control-fh" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary-fh btn-block" style="margin-top:0.5rem">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </button>
+            </form>
+
+            <p style="text-align:center; margin-top:1rem; margin-bottom:0.5rem;">
+                <a href="/accounts/password-reset/" style="color:#667eea; font-weight:500; font-size:0.9rem; text-decoration:none;">
+                    <i class="fas fa-lock"></i> ¿Olvidaste tu contraseña?
+                </a>
+            </p>
+            <p style="text-align:center; margin-top:0.5rem; color:#999; font-size:0.9rem;">
+                ¿No tienes cuenta?
+                <a href="/accounts/register/" style="color:#0d47a1; font-weight:600">Regístrate aquí</a>
+            </p>
+            <p style="text-align:center; margin-top:0.5rem; margin-bottom:0;">
+                <a href="/" style="color:#667eea; font-weight:500; font-size:0.9rem; text-decoration:none;">
+                    <i class="fas fa-home"></i> Volver a Inicio
+                </a>
+            </p>
+        </div>
+    </div>
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+
+</html>

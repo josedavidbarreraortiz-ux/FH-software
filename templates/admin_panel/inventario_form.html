@@ -1,0 +1,50 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ titulo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-warehouse" style="color:var(--accent)"></i> {{ titulo }}</h1>
+    <a href="/panel/inventario/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+<div class="card-fh" style="max-width:600px">
+    <div class="card-body" style="padding:2rem">
+        <h5 style="color:var(--text-primary); margin-bottom:1rem">{{ inventario.producto.producto_nombre }}</h5>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock actual</label>
+                        <input type="number" name="stock_actual" class="form-control-fh"
+                            value="{{ inventario.inventario_stock_actual|default:0 }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock mínimo</label>
+                        <input type="number" name="stock_minimo" class="form-control-fh"
+                            value="{{ inventario.inventario_stock_minimo|default:0 }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label-fh">Stock máximo</label>
+                        <input type="number" name="stock_maximo" class="form-control-fh"
+                            value="{{ inventario.inventario_stock_maximo|default:0 }}">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Ubicación</label>
+                <input type="text" name="ubicacion" class="form-control-fh"
+                    value="{{ inventario.inventario_ubicacion|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label-fh">Observaciones</label>
+                <input type="text" name="observaciones" class="form-control-fh"
+                    value="{{ inventario.observaciones|default:'' }}">
+            </div>
+            <button type="submit" class="btn-primary-fh"><i class="fas fa-save"></i> Guardar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

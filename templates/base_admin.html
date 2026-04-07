@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin - FH{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                FH Store
+                <span>Panel Administrativo</span>
+            </div>
+            <ul class="sidebar-nav">
+                <li class="nav-section">Principal</li>
+                <li class="nav-item">
+                    <a href="/panel/" class="{% if request.path == '/panel/' %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i> Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-section">Gestión</li>
+                <li class="nav-item">
+                    <a href="/panel/productos/" class="{% if '/productos/' in request.path %}active{% endif %}">
+                        <i class="fas fa-box"></i> Productos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/panel/categorias/" class="{% if '/categorias/' in request.path %}active{% endif %}">
+                        <i class="fas fa-tags"></i> Categorías
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/panel/inventario/" class="{% if '/inventario/' in request.path %}active{% endif %}">
+                        <i class="fas fa-warehouse"></i> Inventario
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/panel/movimientos/" class="{% if '/movimientos/' in request.path %}active{% endif %}">
+                        <i class="fas fa-exchange-alt"></i> Movimientos
+                    </a>
+                </li>
+
+                <li class="nav-section">Ventas</li>
+                <li class="nav-item">
+                    <a href="/panel/ventas/" class="{% if '/ventas/' in request.path %}active{% endif %}">
+                        <i class="fas fa-shopping-cart"></i> Ventas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/panel/clientes/" class="{% if '/clientes/' in request.path %}active{% endif %}">
+                        <i class="fas fa-users"></i> Clientes
+                    </a>
+                </li>
+
+                <li class="nav-section">Sistema</li>
+                <li class="nav-item">
+                    <a href="/panel/usuarios/" class="{% if '/usuarios/' in request.path %}active{% endif %}">
+                        <i class="fas fa-user-shield"></i> Usuarios
+                    </a>
+                </li>
+
+                <li class="nav-section">Herramientas</li>
+                <li class="nav-item">
+                    <a href="/panel/reportes/" class="{% if '/reportes/' in request.path %}active{% endif %}">
+                        <i class="fas fa-file-pdf"></i> Reportes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/panel/carga-masiva/" class="{% if '/carga-masiva/' in request.path %}active{% endif %}">
+                        <i class="fas fa-file-upload"></i> Carga Masiva
+                    </a>
+                </li>
+
+                <li class="nav-section">Otros</li>
+                <li class="nav-item">
+                    <a href="/" target="_blank">
+                        <i class="fas fa-store"></i> Ver Tienda
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/accounts/logout/">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            {% if messages %}
+            {% for message in messages %}
+            <div
+                class="alert-fh {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}warning{% endif %}">
+                <i
+                    class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,140 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Reportes - Admin FH{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-chart-bar" style="color:#667eea"></i> Centro de Reportes</h1>
+    <span class="text-muted-fh">Genera reportes PDF y gestiona cargas masivas</span>
+</div>
+
+<!-- Sección: Reportes PDF -->
+<div class="reports-section">
+    <div class="section-title">
+        <i class="fas fa-file-pdf"></i> Reportes PDF
+    </div>
+    <div class="reports-grid">
+        <a href="/panel/reportes/productos/" class="report-tile" style="--tile-color: #dc3545;">
+            <div class="tile-icon"><i class="fas fa-box"></i></div>
+            <h3>Productos</h3>
+            <p>Genera reportes PDF de productos con filtros por categoría, marca, precio y stock.</p>
+            <span class="tile-action">Generar <i class="fas fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/panel/reportes/ventas/" class="report-tile" style="--tile-color: #27ae60;">
+            <div class="tile-icon"><i class="fas fa-shopping-cart"></i></div>
+            <h3>Ventas</h3>
+            <p>Reportes de ventas con filtros por fecha, cliente, método de pago y montos.</p>
+            <span class="tile-action">Generar <i class="fas fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/panel/reportes/inventario/" class="report-tile" style="--tile-color: #ff9800;">
+            <div class="tile-icon"><i class="fas fa-warehouse"></i></div>
+            <h3>Inventario</h3>
+            <p>Estado del inventario con filtro por stock agotado, bajo o disponible.</p>
+            <span class="tile-action">Generar <i class="fas fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/panel/reportes/usuarios/" class="report-tile" style="--tile-color: #9c27b0;">
+            <div class="tile-icon"><i class="fas fa-user-shield"></i></div>
+            <h3>Usuarios</h3>
+            <p>Listado de usuarios registrados filtrado por rol y estado.</p>
+            <span class="tile-action">Generar <i class="fas fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/panel/reportes/clientes/" class="report-tile" style="--tile-color: #0d47a1;">
+            <div class="tile-icon"><i class="fas fa-users"></i></div>
+            <h3>Clientes</h3>
+            <p>Información de clientes con historial de compras y montos totales.</p>
+            <span class="tile-action">Generar <i class="fas fa-arrow-right"></i></span>
+        </a>
+    </div>
+</div>
+
+<!-- Sección: Carga Masiva -->
+<div class="reports-section">
+    <div class="section-title">
+        <i class="fas fa-file-upload"></i> Carga Masiva
+    </div>
+    <div class="reports-grid">
+        <a href="/panel/carga-masiva/" class="report-tile" style="--tile-color: #00897b;">
+            <div class="tile-icon"><i class="fas fa-boxes-stacked"></i></div>
+            <h3>Importar Productos</h3>
+            <p>Carga masiva de productos desde archivos CSV o Excel con validación automática.</p>
+            <span class="tile-action">Importar <i class="fas fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/panel/carga-masiva/usuarios/" class="report-tile" style="--tile-color: #5c6bc0;">
+            <div class="tile-icon"><i class="fas fa-user-plus"></i></div>
+            <h3>Importar Usuarios</h3>
+            <p>Carga masiva de usuarios desde archivos CSV o Excel con roles y contraseñas.</p>
+            <span class="tile-action">Importar <i class="fas fa-arrow-right"></i></span>
+        </a>
+    </div>
+</div>
+
+<style>
+    .reports-section {
+        margin-bottom: 32px;
+    }
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .section-title i {
+        color: #667eea;
+        font-size: 1.15rem;
+    }
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .report-tile {
+        background: var(--card-bg);
+        border-radius: 14px;
+        padding: 28px 24px;
+        text-decoration: none;
+        color: var(--text-primary);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border-left: 4px solid var(--tile-color);
+    }
+    .report-tile:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    .tile-icon {
+        width: 50px; height: 50px;
+        background: var(--tile-color);
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 16px;
+        font-size: 1.3rem; color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .report-tile h3 {
+        font-size: 1.1rem; font-weight: 700; margin: 0 0 8px;
+    }
+    .report-tile p {
+        font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 16px; line-height: 1.5;
+    }
+    .tile-action {
+        font-size: 0.85rem; font-weight: 600; color: var(--tile-color);
+        display: flex; align-items: center; gap: 6px;
+    }
+    .tile-action i { transition: transform 0.3s; }
+    .report-tile:hover .tile-action i { transform: translateX(4px); }
+</style>
+{% endblock %}

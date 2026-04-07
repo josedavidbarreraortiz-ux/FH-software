@@ -1,0 +1,40 @@
+{% extends 'base_admin.html' %}
+{% block title %}Clientes - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-users" style="color:var(--accent)"></i> Clientes</h1>
+</div>
+<div class="table-container">
+    <table class="table-fh">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Documento</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Dirección</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in clientes %}
+            <tr>
+                <td>{{ c.cliente_id }}</td>
+                <td style="color:var(--text-primary); font-weight:500">{{ c.cliente_nombre }}</td>
+                <td>{{ c.cliente_numero_documento|default:"-" }}</td>
+                <td>{{ c.cliente_telefono|default:"-" }}</td>
+                <td>{{ c.cliente_email|default:"-" }}</td>
+                <td>{{ c.cliente_direccion|default:"-" }}</td>
+                <td><a href="/panel/clientes/{{ c.cliente_id }}/editar/" class="btn-outline-fh btn-sm"><i
+                            class="fas fa-edit"></i></a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="empty-state">No hay clientes</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

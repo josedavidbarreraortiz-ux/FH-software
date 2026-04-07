@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Carrito de Compras - FH{% endblock %}
+{% block content %}
+<div class="checkout-wrapper">
+    <div class="container">
+        <div class="checkout-header">
+            <h1 class="checkout-title"><i class="fas fa-cart-shopping" style="margin-right:12px"></i>Carrito de Compras</h1>
+            <p class="checkout-subtitle">Revisa tus productos antes de finalizar la compra</p>
+        </div>
+        {% if items %}
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="cart-items-container">
+                    {% for item in items %}
+                    <div class="cart-item-modern">
+                        <div class="cart-item-image">
+                            {% if item.producto.foto %}
+                            <img src="/media/uploads/productos/{{ item.producto.foto }}" alt="{{ item.producto.producto_nombre }}">
+                            {% else %}
+                            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f1f5f9"><i class="fas fa-box" style="font-size:2rem;color:#94a3b8"></i></div>
+                            {% endif %}
+                        </div>
+                        <div class="cart-item-details">
+                            <div>
+                                <h3 class="cart-item-name">{{ item.producto.producto_nombre }}</h3>
+                                <p class="cart-item-price-unit">{{ item.producto.producto_marca }} &middot; {{ item.producto.precio_formateado }} c/u</p>
+                            </div>
+                            <div class="cart-item-actions">
+                                <form method="post" action="/carrito/actualizar/{{ item.producto.producto_id }}/" class="qty-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="cantidad" value="{{ item.cantidad|add:'-1' }}">
+                                    <button type="submit" class="qty-btn"><i class="fas fa-minus"></i></button>
+                                </form>
+                                <span class="qty-value">{{ item.cantidad }}</span>
+                                <form method="post" action="/carrito/actualizar/{{ item.producto.producto_id }}/" class="qty-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="cantidad" value="{{ item.cantidad|add:'1' }}">
+                                    <button type="submit" class="qty-btn"><i class="fas fa-plus"></i></button>
+                                </form>
+                                <a href="/carrito/eliminar/{{ item.producto.producto_id }}/" class="btn-remove"><i class="fas fa-trash" style="margin-right:4px"></i>Eliminar</a>
+                            </div>
+                        </div>
+                        <div class="cart-item-subtotal">
+                            <div class="subtotal-label">Subtotal</div>
+                            <div class="subtotal-amount">${{ item.subtotal|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="summary-card">
+                    <h2 class="summary-title"><i class="fas fa-receipt" style="margin-right:8px"></i>Resumen del Pedido</h2>
+                    <div class="summary-totals">
+                        <div class="totals-row"><span>Productos ({{ items|length }})</span><span>{{ total_formateado }}</span></div>
+                        <div class="totals-row"><span>Env&iacute;o</span><span class="free-text"><i class="fas fa-truck" style="margin-right:4px"></i>Gratis</span></div>
+                        <div class="totals-row total-row"><span>Total</span><span class="total-amount">{{ total_formateado }} COP</span></div>
+                    </div>
+                    <a href="/checkout/" class="btn-submit" style="margin-top:20px;text-decoration:none"><i class="fas fa-credit-card" style="margin-right:8px"></i>Proceder al Pago</a>
+                    <a href="/productos/" class="btn-back"><i class="fas fa-arrow-left" style="margin-right:8px"></i>Continuar Comprando</a>
+                    <div class="trust-badges">
+                        <div class="trust-item"><i class="fas fa-shield-alt"></i><span>Seguro</span></div>
+                        <div class="trust-item"><i class="fas fa-truck"></i><span>Gratis</span></div>
+                        <div class="trust-item"><i class="fas fa-undo"></i><span>Devoluci&oacute;n</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-cart">
+            <div class="empty-cart-icon"><i class="fas fa-cart-arrow-down"></i></div>
+            <h3>Tu carrito est&aacute; vac&iacute;o</h3>
+            <p>Descubre nuestros incre&iacute;bles productos y comienza a comprar</p>
+            <a href="/productos/" class="btn-submit" style="display:inline-flex;width:auto;padding:15px 40px;text-decoration:none"><i class="fas fa-bag-shopping" style="margin-right:8px"></i>Explorar Productos</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
