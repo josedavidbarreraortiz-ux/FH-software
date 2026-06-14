@@ -95,20 +95,29 @@
             <h2 class="section-title">Nuestros Productos Estrella</h2>
             <div class="featured-products-grid product-grid">
                 {% for producto in productos %}
+                <a href="/producto/{{ producto.producto_id }}/" class="product-card-link">
                 <div class="product-card">
+                    <div class="card-img-wrapper">
                     {% if producto.foto %}
                     <img src="/media/uploads/productos/{{ producto.foto }}" alt="{{ producto.producto_nombre }}">
                     {% else %}
                     <img src="https://placehold.co/300x300/667eea/FFFFFF?text=Producto"
                         alt="{{ producto.producto_nombre }}">
                     {% endif %}
-                    <h3>{{ producto.producto_nombre }}</h3>
-                    <p class="description">{{ producto.resumen|default:"" }}</p>
-                    <p class="price">{{ producto.precio_formateado }}</p>
-                    <div class="product-actions">
-                        <a href="/producto/{{ producto.producto_id }}/" class="cta-button">Ver detalles</a>
+                    </div>
+                    <div class="card-body-custom">
+                        <span class="badge-cat">{{ producto.categoria.categoria_nombre|default:"Sin categoría" }}</span>
+                        <h3>{{ producto.producto_nombre }}</h3>
+                        <p class="description">{{ producto.resumen|default:"" }}</p>
+                        <span class="price">{{ producto.precio_formateado }}</span>
+                    </div>
+                    <div class="card-footer-custom">
+                        <span class="btn-view-detail">
+                            <i class="fas fa-eye"></i> Ver Detalle
+                        </span>
                     </div>
                 </div>
+                </a>
                 {% endfor %}
             </div>
             <div style="text-align:center; margin-top:3rem;">
