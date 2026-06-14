@@ -33,15 +33,13 @@ urlpatterns = [
     path('usuarios/', views.usuarios_list, name='usuarios'),
     path('usuarios/crear/', views.usuario_create, name='usuario_create'),
     path('usuarios/<int:pk>/editar/', views.usuario_edit, name='usuario_edit'),
+    path('usuarios/<int:pk>/reset-password/', views.usuario_send_reset, name='usuario_send_reset'),
     path('usuarios/<int:pk>/eliminar/', views.usuario_delete, name='usuario_delete'),
     
     # Ventas
     path('ventas/', views.ventas_list, name='ventas'),
+    path('ventas/nueva/', views.venta_create, name='venta_create'),
     path('ventas/<int:pk>/', views.venta_detalle_view, name='venta_detalle'),
-    
-    # Clientes
-    path('clientes/', views.clientes_list, name='clientes'),
-    path('clientes/<int:pk>/editar/', views.cliente_edit, name='cliente_edit'),
 
     # ── Reportes ──────────────────────────────────────────────────
     path('reportes/', reportes.reportes_index, name='reportes_index'),

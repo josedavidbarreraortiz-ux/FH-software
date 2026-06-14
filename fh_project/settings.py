@@ -3,11 +3,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-fh-project-key-change-in-production'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fh-project-key-change-in-production')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
@@ -21,6 +21,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -48,19 +49,38 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fh_project.wsgi.application'
 
-DATABASES = {
+CACHES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'fh2',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
     }
 }
+
+import dj_database_url
+
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'fh2',
+            'USER': 'root',
+            'PASSWORD': '',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+            },
+        }
+    }
 
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
@@ -72,7 +92,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = r'C:\Users\josed\Downloads\fh\fh'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -87,8 +107,21 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'josedavidbarreraortiz@gmail.com'    # ← Tu correo Gmail
-EMAIL_HOST_PASSWORD = 'pnkz jwkz uxcm lbpg'    # ← Contraseña de aplicación de Gmail
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'pnkz jwkz uxcm lbpg')    # ← Contraseña de aplicación de Gmail
 DEFAULT_FROM_EMAIL = 'FH TechStore <josedavidbarreraortiz@gmail.com>'
 
 # Tiempo de expiración del token de recuperación (en segundos) — 1 hora
 PASSWORD_RESET_TIMEOUT = 360010896
+
+# ── Configuración para Pruebas (Pytest/Django Test) ──
+import sys
+if 'test' in sys.argv or any('pytest' in arg for arg in sys.argv):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+    TEST_RUNNER = 'fh_project.test_runner.ManagedModelTestRunner'
+
+

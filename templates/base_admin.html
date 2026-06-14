@@ -27,6 +27,7 @@
                     </a>
                 </li>
 
+                {% if request.session.user_role == 'ADMIN' %}
                 <li class="nav-section">Gestión</li>
                 <li class="nav-item">
                     <a href="/panel/productos/" class="{% if '/productos/' in request.path %}active{% endif %}">
@@ -48,6 +49,7 @@
                         <i class="fas fa-exchange-alt"></i> Movimientos
                     </a>
                 </li>
+                {% endif %}
 
                 <li class="nav-section">Ventas</li>
                 <li class="nav-item">
@@ -56,11 +58,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/panel/clientes/" class="{% if '/clientes/' in request.path %}active{% endif %}">
-                        <i class="fas fa-users"></i> Clientes
+                    <a href="/panel/ventas/nueva/"
+                        class="{% if request.path == '/panel/ventas/nueva/' %}active{% endif %}">
+                        <i class="fas fa-cash-register"></i> Nueva Venta
                     </a>
                 </li>
 
+
+                {% if request.session.user_role == 'ADMIN' %}
                 <li class="nav-section">Sistema</li>
                 <li class="nav-item">
                     <a href="/panel/usuarios/" class="{% if '/usuarios/' in request.path %}active{% endif %}">
@@ -79,6 +84,7 @@
                         <i class="fas fa-file-upload"></i> Carga Masiva
                     </a>
                 </li>
+                {% endif %}
 
                 <li class="nav-section">Otros</li>
                 <li class="nav-item">
@@ -102,7 +108,9 @@
                 class="alert-fh {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}warning{% endif %}">
                 <i
                     class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
-                {{ message }}
+                <span style="flex:1">{{ message }}</span>
+                <button type="button" class="alert-close-btn" onclick="this.parentElement.remove()"
+                    title="Cerrar">&times;</button>
             </div>
             {% endfor %}
             {% endif %}

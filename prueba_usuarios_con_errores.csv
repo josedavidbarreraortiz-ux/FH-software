@@ -1,0 +1,11 @@
+nombre;email;password;rol
+;sin_nombre@email.com;Pass1234;USER
+Juan Sin Email;;Pass1234;USER
+María Corta;maria.corta@email.com;123;ADMIN
+Pedro Válido;pedro.valido@email.com;Pedro123;USER
+;;;;;
+Ana Rol Raro;ana.rol@email.com;Ana12345;SUPERADMIN
+Luis Válido;luis.valido@email.com;Luis1234;ADMIN
+Carlos Sin Pass;carlos.sinpass@email.com;;USER
+Pedro Duplicado;pedro.valido@email.com;Otro1234;USER
+Sofía OK;sofia.ok@email.com;Sofia123;USER

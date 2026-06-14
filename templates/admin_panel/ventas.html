@@ -3,6 +3,7 @@
 {% block content %}
 <div class="admin-header">
     <h1><i class="fas fa-shopping-cart" style="color:var(--accent)"></i> Ventas</h1>
+    <a href="/panel/ventas/nueva/" class="btn-primary-fh"><i class="fas fa-plus"></i> Nueva Venta</a>
 </div>
 <div class="table-container">
     <table class="table-fh">
@@ -10,6 +11,8 @@
             <tr>
                 <th>#</th>
                 <th>Cliente</th>
+                <th>Dirección</th>
+                <th>Vendedor / Origen</th>
                 <th>Fecha</th>
                 <th>Hora</th>
                 <th>Total</th>
@@ -21,7 +24,17 @@
             {% for v in ventas %}
             <tr>
                 <td><span class="badge-fh purple">{{ v.venta_codigo }}</span></td>
-                <td style="color:var(--text-primary)">{{ v.cliente.cliente_nombre|default:"-" }}</td>
+                <td style="color:var(--text-primary)">{{ v.comprador.name|default:"-" }}</td>
+                <td style="color:var(--text-secondary); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ v.comprador.direccion|default:'-' }}">{{ v.comprador.direccion|default:"-" }}</td>
+                <td style="color:#666; font-size:0.9rem">
+                    {% if v.user.role == 'USER' %}
+                        <span class="badge-fh" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-globe"></i> Web</span>
+                    {% elif v.user.role == 'ADMIN' %}
+                        <i class="fas fa-user-shield" style="color:#d97706;" title="Admin"></i> {{ v.user.name }}
+                    {% else %}
+                        <i class="fas fa-user-tie" style="color:#059669;" title="Vendedor"></i> {{ v.user.name }}
+                    {% endif %}
+                </td>
                 <td>{{ v.venta_fecha }}</td>
                 <td>{{ v.venta_hora|time:"H:i" }}</td>
                 <td style="color:var(--success); font-weight:700">{{ v.total_formateado }}</td>

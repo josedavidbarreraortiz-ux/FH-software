@@ -10,7 +10,7 @@ from django.db.models import Q, F, Sum, Count
 
 from accounts.models import (
     User, Producto, Categoria, Inventario, Venta, VentaDetalle,
-    Cliente, MovimientoInventario, MetodoPago
+    MovimientoInventario, MetodoPago
 )
 from admin_panel.views import admin_required, _get_marcas
 import bcrypt
@@ -199,8 +199,35 @@ def reporte_productos_pdf(request):
 @admin_required
 def reporte_ventas_view(request):
     metodos_pago = MetodoPago.objects.all().order_by('metodo_pago_nombre')
+    
+    # Ranking por Vendedores
+    ventas_vendedores = Venta.objects.values('user__name', 'user__role').annotate(
+        total_ventas=Count('venta_codigo'),
+        ingresos=Sum('venta_total')
+    ).order_by('-ingresos')
+
+    ranking_vendedores = []
+    for v in ventas_vendedores:
+        val = v['ingresos'] or 0
+        v['ingresos_fmt'] = f"$ {val:,.0f} COP".replace(',', '.')
+        ranking_vendedores.append(v)
+
+    # Ranking por Clientes (Top 15)
+    ventas_clientes = Venta.objects.values('comprador__name', 'comprador__email').annotate(
+        total_compras=Count('venta_codigo'),
+        gastado=Sum('venta_total')
+    ).order_by('-gastado')[:15]
+
+    ranking_clientes = []
+    for c in ventas_clientes:
+        val = c['gastado'] or 0
+        c['gastado_fmt'] = f"$ {val:,.0f} COP".replace(',', '.')
+        ranking_clientes.append(c)
+
     return render(request, 'admin_panel/reporte_ventas.html', {
         'metodos_pago': metodos_pago,
+        'ranking_vendedores': ranking_vendedores,
+        'ranking_clientes': ranking_clientes,
     })
 
 
@@ -215,15 +242,15 @@ def reporte_ventas_pdf(request):
     ordenar_por = request.GET.get('ordenarPor', 'fecha').strip()
     direccion = request.GET.get('direccion', 'desc').strip()
 
-    qs = Venta.objects.select_related('cliente', 'user', 'metodo_pago').all()
+    qs = Venta.objects.select_related('comprador', 'user', 'metodo_pago').all()
     if fecha_desde: qs = qs.filter(venta_fecha__gte=fecha_desde)
     if fecha_hasta: qs = qs.filter(venta_fecha__lte=fecha_hasta)
-    if cliente: qs = qs.filter(Q(cliente__cliente_nombre__icontains=cliente) | Q(user__name__icontains=cliente))
+    if cliente: qs = qs.filter(Q(comprador__name__icontains=cliente) | Q(user__name__icontains=cliente))
     if metodo_pago_id: qs = qs.filter(metodo_pago_id=metodo_pago_id)
     if total_min: qs = qs.filter(venta_total__gte=Decimal(total_min))
     if total_max: qs = qs.filter(venta_total__lte=Decimal(total_max))
 
-    order_map = {'fecha': 'venta_fecha', 'codigo': 'venta_codigo', 'total': 'venta_total', 'cliente': 'cliente__cliente_nombre'}
+    order_map = {'fecha': 'venta_fecha', 'codigo': 'venta_codigo', 'total': 'venta_total', 'cliente': 'comprador__name'}
     of = order_map.get(ordenar_por, 'venta_fecha')
     if direccion == 'desc': of = f'-{of}'
     qs = qs.order_by(of)
@@ -251,7 +278,7 @@ def reporte_ventas_pdf(request):
             str(v.venta_codigo),
             str(v.venta_fecha) if v.venta_fecha else '-',
             v.venta_hora.strftime('%H:%M') if v.venta_hora else '-',
-            Paragraph(v.cliente.cliente_nombre if v.cliente else '-', s['cell']),
+            Paragraph(v.comprador.name if v.comprador else '-', s['cell']),
             v.user.name if v.user else '-',
             v.metodo_pago.metodo_pago_nombre if v.metodo_pago else '-',
             f'${v.venta_total:,.0f}' if v.venta_total else '$0',
@@ -268,6 +295,68 @@ def reporte_ventas_pdf(request):
     ts.add('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8eaf6'))
     t.setStyle(ts)
     elements.append(t)
+
+    # =============== RESÚMENES ===============
+    vendedores_dict = {}
+    clientes_dict = {}
+
+    for v in ventas:
+        v_name = v.user.name if v.user else 'Desconocido'
+        v_role = v.user.role if v.user else 'Desconocido'
+        if v_name not in vendedores_dict:
+            vendedores_dict[v_name] = {'role': v_role, 'ventas': 0, 'total': Decimal('0')}
+        vendedores_dict[v_name]['ventas'] += 1
+        vendedores_dict[v_name]['total'] += (v.venta_total or Decimal('0'))
+
+        c_name = v.comprador.name if v.comprador else 'Desconocido'
+        if c_name not in clientes_dict:
+            clientes_dict[c_name] = {'ventas': 0, 'total': Decimal('0')}
+        clientes_dict[c_name]['ventas'] += 1
+        clientes_dict[c_name]['total'] += (v.venta_total or Decimal('0'))
+
+    vendedores_list = sorted(vendedores_dict.items(), key=lambda x: x[1]['total'], reverse=True)
+    clientes_list = sorted(clientes_dict.items(), key=lambda x: x[1]['total'], reverse=True)[:15]
+
+    elements.append(Spacer(1, 25))
+    s_title = ParagraphStyle('T2', parent=s['title'], fontSize=14)
+    elements.append(Paragraph('Rendimiento por Vendedor / Origen', s_title))
+    
+    data_vend = [['Usuario / Canal', 'Rol', 'Ventas', 'Ingresos Generados']]
+    for name, info in vendedores_list:
+        if info['role'] == 'ADMIN': r_str = 'Admin'
+        elif info['role'] == 'VENDEDOR': r_str = 'Vendedor'
+        else: r_str = 'Web (Autoservicio)'
+
+        data_vend.append([
+            Paragraph(name, s['cell']),
+            r_str,
+            str(info['ventas']),
+            f"$ {info['total']:,.0f} COP".replace(',', '.')
+        ])
+    t_vend = Table(data_vend, colWidths=[200, 100, 80, 100], repeatRows=1)
+    ts_v = _table_style()
+    ts_v.add('ALIGN', (2, 1), (2, -1), 'CENTER')
+    ts_v.add('ALIGN', (3, 1), (3, -1), 'RIGHT')
+    t_vend.setStyle(ts_v)
+    elements.append(t_vend)
+
+    elements.append(Spacer(1, 25))
+    elements.append(Paragraph('Mejores Clientes (Top Compradores)', s_title))
+    
+    data_cli = [['Cliente', 'Compras', 'Total Gastado']]
+    for name, info in clientes_list:
+        data_cli.append([
+            Paragraph(name, s['cell']),
+            str(info['ventas']),
+            f"$ {info['total']:,.0f} COP".replace(',', '.')
+        ])
+    t_cli = Table(data_cli, colWidths=[300, 80, 100], repeatRows=1)
+    ts_c = _table_style()
+    ts_c.add('ALIGN', (1, 1), (1, -1), 'CENTER')
+    ts_c.add('ALIGN', (2, 1), (2, -1), 'RIGHT')
+    t_cli.setStyle(ts_c)
+    elements.append(t_cli)
+    # =========================================
 
     buf = _build_pdf(elements)
     resp = HttpResponse(buf, content_type='application/pdf')
@@ -425,20 +514,22 @@ def reporte_clientes_pdf(request):
     ordenar_por = request.GET.get('ordenarPor', 'nombre').strip()
     direccion = request.GET.get('direccion', 'asc').strip()
 
-    qs = Cliente.objects.select_related('user').all()
-    if nombre: qs = qs.filter(cliente_nombre__icontains=nombre)
-    if email: qs = qs.filter(cliente_email__icontains=email)
+    # Consultar usuarios que tienen compras
+    compradores_ids = Venta.objects.exclude(comprador__isnull=True).values_list('comprador_id', flat=True).distinct()
+    qs = User.objects.filter(id__in=compradores_ids)
+    if nombre: qs = qs.filter(name__icontains=nombre)
+    if email: qs = qs.filter(email__icontains=email)
 
-    order_map = {'nombre': 'cliente_nombre', 'email': 'cliente_email', 'id': 'cliente_id'}
-    of = order_map.get(ordenar_por, 'cliente_nombre')
+    order_map = {'nombre': 'name', 'email': 'email', 'id': 'id'}
+    of = order_map.get(ordenar_por, 'name')
     if direccion == 'desc': of = f'-{of}'
     qs = qs.order_by(of)
     clientes = list(qs)
 
-    # Contar compras por cliente
+    # Contar compras por comprador
     compras_map = {}
-    for v in Venta.objects.values('cliente_id').annotate(total=Count('venta_codigo'), suma=Sum('venta_total')):
-        compras_map[v['cliente_id']] = {'total': v['total'], 'suma': v['suma'] or 0}
+    for v in Venta.objects.values('comprador_id').annotate(total=Count('venta_codigo'), suma=Sum('venta_total')):
+        compras_map[v['comprador_id']] = {'total': v['total'], 'suma': v['suma'] or 0}
 
     elements = []
     filtros = []
@@ -450,14 +541,14 @@ def reporte_clientes_pdf(request):
     data = [['ID', 'Nombre', 'Documento', 'Email', 'Teléfono', 'Dirección', 'Compras', 'Total Compras']]
     s = _get_pdf_styles()
     for c in clientes:
-        info = compras_map.get(c.cliente_id, {'total': 0, 'suma': 0})
+        info = compras_map.get(c.id, {'total': 0, 'suma': 0})
         data.append([
-            str(c.cliente_id),
-            Paragraph(c.cliente_nombre or '-', s['cell']),
-            c.cliente_numero_documento or '-',
-            Paragraph(c.cliente_email or '-', s['cell']),
-            c.cliente_telefono or '-',
-            Paragraph(c.cliente_direccion or '-', s['cell']),
+            str(c.id),
+            Paragraph(c.name or '-', s['cell']),
+            c.numero_documento or '-',
+            Paragraph(c.email or '-', s['cell']),
+            c.telefono or '-',
+            Paragraph(c.direccion or '-', s['cell']),
             str(info['total']),
             f'${info["suma"]:,.0f}',
         ])
@@ -497,14 +588,16 @@ def carga_masiva_view(request):
         try:
             rows = _parse_csv(archivo) if filename.endswith('.csv') else _parse_excel(archivo)
             creados, errores = _procesar_carga_productos(rows)
+            if errores:
+                for err in errores:
+                    messages.error(request, err)
+                messages.warning(request, f'Se encontraron {len(errores)} error(es). No se importó ningún producto. Corrige los errores y vuelve a intentarlo.')
+                return render(request, 'admin_panel/carga_masiva.html', {'categorias': categorias, 'tipo': 'productos', 'hay_errores': True})
             if creados > 0:
                 messages.success(request, f'¡{creados} producto(s) importado(s) exitosamente!')
-            for err in errores[:10]:
-                messages.error(request, err)
-            if len(errores) > 10:
-                messages.warning(request, f'... y {len(errores) - 10} error(es) más.')
         except Exception as e:
             messages.error(request, f'Error al procesar el archivo: {str(e)}')
+            return render(request, 'admin_panel/carga_masiva.html', {'categorias': categorias, 'tipo': 'productos', 'hay_errores': True})
 
         return render(request, 'admin_panel/carga_masiva.html', {'categorias': categorias, 'carga_completada': True, 'tipo': 'productos'})
 
@@ -582,14 +675,16 @@ def carga_masiva_usuarios_view(request):
         try:
             rows = _parse_csv(archivo) if filename.endswith('.csv') else _parse_excel(archivo)
             creados, errores = _procesar_carga_usuarios(rows)
+            if errores:
+                for err in errores:
+                    messages.error(request, err)
+                messages.warning(request, f'Se encontraron {len(errores)} error(es). No se importó ningún usuario. Corrige los errores y vuelve a intentarlo.')
+                return render(request, 'admin_panel/carga_masiva_usuarios.html', {'hay_errores': True})
             if creados > 0:
                 messages.success(request, f'¡{creados} usuario(s) importado(s) exitosamente!')
-            for err in errores[:10]:
-                messages.error(request, err)
-            if len(errores) > 10:
-                messages.warning(request, f'... y {len(errores) - 10} error(es) más.')
         except Exception as e:
             messages.error(request, f'Error al procesar el archivo: {str(e)}')
+            return render(request, 'admin_panel/carga_masiva_usuarios.html', {'hay_errores': True})
 
         return render(request, 'admin_panel/carga_masiva_usuarios.html', {'carga_completada': True})
 
@@ -703,11 +798,13 @@ def _parse_excel(archivo):
 
 
 def _procesar_carga_productos(rows):
-    creados, errores = 0, []
+    errores = []
     cat_cache = {}
     for cat in Categoria.objects.filter(estado=1):
         cat_cache[cat.categoria_nombre.lower().strip()] = cat
 
+    # Fase 1: Validar todas las filas
+    productos_validos = []
     for idx, row in enumerate(rows, start=2):
         nombre = row.get('nombre', '').strip()
         if not nombre:
@@ -723,35 +820,57 @@ def _procesar_carga_productos(rows):
         cat_nombre = row.get('categoria', '').strip()
         categoria = cat_cache.get(cat_nombre.lower()) if cat_nombre else None
         if cat_nombre and not categoria:
-            errores.append(f'Fila {idx}: Categoría "{cat_nombre}" no encontrada. Se asignará sin categoría.')
+            errores.append(f'Fila {idx}: Categoría "{cat_nombre}" no encontrada.')
+            continue
 
         estado = row.get('estado', 'Activo').strip()
         if estado not in ('Activo', 'Inactivo'): estado = 'Activo'
 
+        productos_validos.append({
+            'nombre': nombre, 'codigo': row.get('codigo', '').strip(),
+            'marca': row.get('marca', '').strip(), 'precio': precio,
+            'unidad': row.get('unidad', 'Unidad').strip() or 'Unidad',
+            'categoria': categoria, 'estado': estado, 'resumen': row.get('resumen', '').strip(),
+            'stock': _safe_int(row.get('stock', '0')),
+            'stock_minimo': _safe_int(row.get('stock_minimo', '0')),
+            'stock_maximo': _safe_int(row.get('stock_maximo', '0')),
+            'ubicacion': row.get('ubicacion', '').strip(),
+        })
+
+    # Si hay errores, no crear nada
+    if errores:
+        return 0, errores
+
+    # Fase 2: Crear todos los registros
+    creados = 0
+    for p in productos_validos:
         try:
             producto = Producto.objects.create(
-                producto_nombre=nombre, producto_codigo_bar=row.get('codigo', '').strip(),
-                producto_marca=row.get('marca', '').strip(), producto_precio_venta=precio,
-                tipo_unidad=row.get('unidad', 'Unidad').strip() or 'Unidad',
-                categoria=categoria, producto_estado=estado, resumen=row.get('resumen', '').strip(),
+                producto_nombre=p['nombre'], producto_codigo_bar=p['codigo'],
+                producto_marca=p['marca'], producto_precio_venta=p['precio'],
+                tipo_unidad=p['unidad'], categoria=p['categoria'],
+                producto_estado=p['estado'], resumen=p['resumen'],
             )
             Inventario.objects.create(
-                producto=producto, inventario_stock_actual=_safe_int(row.get('stock', '0')),
-                inventario_stock_minimo=_safe_int(row.get('stock_minimo', '0')),
-                inventario_stock_maximo=_safe_int(row.get('stock_maximo', '0')),
-                inventario_ubicacion=row.get('ubicacion', '').strip(),
+                producto=producto, inventario_stock_actual=p['stock'],
+                inventario_stock_minimo=p['stock_minimo'],
+                inventario_stock_maximo=p['stock_maximo'],
+                inventario_ubicacion=p['ubicacion'],
             )
             creados += 1
         except Exception as e:
-            errores.append(f'Fila {idx}: Error creando "{nombre}": {str(e)}')
+            errores.append(f'Error creando "{p["nombre"]}": {str(e)}')
 
     return creados, errores
 
 
 def _procesar_carga_usuarios(rows):
-    creados, errores = 0, []
-    emails_existentes = set(User.objects.values_list('email', flat=True))
+    errores = []
+    emails_existentes = set(e.lower() for e in User.objects.values_list('email', flat=True))
+    emails_en_archivo = set()
 
+    # Fase 1: Validar todas las filas
+    usuarios_validos = []
     for idx, row in enumerate(rows, start=2):
         nombre = row.get('nombre', '').strip()
         email = row.get('email', '').strip()
@@ -767,24 +886,40 @@ def _procesar_carga_usuarios(rows):
             errores.append(f'Fila {idx}: La contraseña debe tener al menos 6 caracteres para "{nombre}".')
             continue
         if email.lower() in emails_existentes:
-            errores.append(f'Fila {idx}: El email "{email}" ya está registrado.')
+            errores.append(f'Fila {idx}: El email "{email}" ya está registrado en el sistema.')
+            continue
+        if email.lower() in emails_en_archivo:
+            errores.append(f'Fila {idx}: El email "{email}" está duplicado en el archivo.')
             continue
 
         role = row.get('rol', 'USER').strip().upper()
         if role not in ('USER', 'ADMIN'):
-            role = 'USER'
+            errores.append(f'Fila {idx}: Rol "{row.get("rol", "").strip()}" no válido para "{nombre}". Usa USER o ADMIN.')
+            continue
 
+        emails_en_archivo.add(email.lower())
+        usuarios_validos.append({
+            'nombre': nombre, 'email': email,
+            'password': password, 'role': role,
+        })
+
+    # Si hay errores, no crear nada
+    if errores:
+        return 0, errores
+
+    # Fase 2: Crear todos los registros
+    creados = 0
+    for u in usuarios_validos:
         try:
-            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            hashed = bcrypt.hashpw(u['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             User.objects.create(
-                name=nombre, email=email, password=hashed,
-                role=role, enabled=True,
+                name=u['nombre'], email=u['email'], password=hashed,
+                role=u['role'], enabled=True,
                 created_at=datetime.now(), updated_at=datetime.now(),
             )
-            emails_existentes.add(email.lower())
             creados += 1
         except Exception as e:
-            errores.append(f'Fila {idx}: Error creando "{nombre}": {str(e)}')
+            errores.append(f'Error creando "{u["nombre"]}": {str(e)}')
 
     return creados, errores
 

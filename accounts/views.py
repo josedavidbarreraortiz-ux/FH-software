@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings
-from accounts.models import User, Cliente
+from accounts.models import User
 from accounts.backends import FHAuthBackend
 import bcrypt
 import hashlib
@@ -26,7 +26,7 @@ def login_view(request):
             request.session['user_email'] = user.email
             request.session['user_role'] = user.role
             
-            if user.role == 'ADMIN':
+            if user.role in ('ADMIN', 'VENDEDOR'):
                 return redirect('/panel/')
             else:
                 return redirect('/')

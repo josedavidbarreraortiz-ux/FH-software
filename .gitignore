@@ -1,0 +1,14 @@
+# Django y Python
+__pycache__/
+*.pyc
+.pytest_cache/
+db.sqlite3
+.env
+
+# Archivos grandes y temporales
+*.apk
+*.pdf
+*.docx
+datadump.json
+media/
+staticfiles/

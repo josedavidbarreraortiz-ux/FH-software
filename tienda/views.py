@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from accounts.models import (
     Producto, Categoria, Inventario, Venta, VentaDetalle,
-    Cliente, MetodoPago, MovimientoInventario, ProductoAtributo, User
+    MetodoPago, MovimientoInventario, ProductoAtributo, User
 )
 from functools import wraps
 from datetime import date, datetime
@@ -21,7 +21,11 @@ def login_required_user(view_func):
 
 
 def index(request):
-    productos = Producto.objects.filter(producto_estado='Activo').select_related('categoria').order_by('producto_id')[:6]
+    from django.core.cache import cache
+    productos = cache.get('home_productos')
+    if productos is None:
+        productos = list(Producto.objects.filter(producto_estado='Activo').select_related('categoria').order_by('producto_id')[:6])
+        cache.set('home_productos', productos, 300)
     return render(request, 'tienda/index.html', {
         'productos': productos,
     })
@@ -191,13 +195,8 @@ def checkout(request):
         return redirect('/carrito/')
     
     user_id = request.session.get('user_id')
+    user = get_object_or_404(User, pk=user_id)
     metodos_pago = MetodoPago.objects.all()
-    
-    # Try to get existing cliente for pre-filling
-    try:
-        cliente = Cliente.objects.get(user_id=user_id)
-    except Cliente.DoesNotExist:
-        cliente = None
     
     items = []
     total = Decimal('0')
@@ -222,31 +221,31 @@ def checkout(request):
         direccion = request.POST.get('direccion', '')
         metodo_pago_id = request.POST.get('metodo_pago')
         observaciones = request.POST.get('observaciones', '')
+        es_regalo = request.POST.get('es_regalo') == '1'
         
-        # Create or update cliente
-        if cliente:
-            cliente.cliente_nombre = nombre
-            cliente.cliente_email = email
-            cliente.cliente_telefono = telefono
-            cliente.cliente_numero_documento = documento
-            cliente.cliente_direccion = direccion
-            cliente.save()
+        if es_regalo:
+            dest_nombre = request.POST.get('destinatario_nombre', '')
+            dest_telefono = request.POST.get('destinatario_telefono', '')
+            dest_direccion = request.POST.get('destinatario_direccion', '')
+            mensaje = request.POST.get('mensaje_regalo', '')
+            
+            obs_regalo = f"[REGALO] Para: {dest_nombre} | Tel: {dest_telefono} | Dir: {dest_direccion}"
+            if mensaje:
+                obs_regalo += f" | Mensaje: {mensaje}"
+                
+            observaciones = f"{obs_regalo}\n{observaciones}".strip()
         else:
-            cliente = Cliente.objects.create(
-                user_id=user_id,
-                cliente_nombre=nombre,
-                cliente_email=email,
-                cliente_telefono=telefono,
-                cliente_numero_documento=documento,
-                cliente_direccion=direccion,
-            )
+            if telefono: user.telefono = telefono
+            if documento: user.numero_documento = documento
+            if direccion: user.direccion = direccion
+            user.save()
         
         venta = Venta.objects.create(
             venta_fecha=date.today(),
             venta_hora=datetime.now().time(),
             venta_total=total,
             user_id=user_id,
-            cliente=cliente,
+            comprador_id=user_id,
             metodo_pago_id=metodo_pago_id,
             observaciones=observaciones,
         )
@@ -268,8 +267,55 @@ def checkout(request):
                 movimiento_motivo='Venta realizada',
             )
         
+        # Enviar correo de confirmación
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+        from django.utils.html import strip_tags
+        from django.conf import settings
+
+        protocol = 'https' if request.is_secure() else 'http'
+        host = request.get_host()
+        base_url = f"{protocol}://{host}"
+
+        ctx = {
+            'nombre': user.name,
+            'venta_codigo': venta.venta_codigo,
+            'es_regalo': es_regalo,
+            'items': items,
+            'total': total,
+            'base_url': base_url,
+        }
+
+        if es_regalo:
+            ctx.update({
+                'dest_nombre': dest_nombre,
+                'dest_telefono': dest_telefono,
+                'dest_direccion': dest_direccion,
+                'mensaje_regalo': mensaje,
+            })
+        else:
+            ctx.update({
+                'telefono': user.telefono,
+                'direccion': user.direccion,
+            })
+
+        try:
+            html_message = render_to_string('tienda/email_compra.html', ctx)
+            plain_message = strip_tags(html_message)
+            send_mail(
+                subject=f"Confirmación de Compra #{venta.venta_codigo} - FH TechStore",
+                message=plain_message,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@fh.com'),
+                recipient_list=[user.email],
+                html_message=html_message,
+                fail_silently=True,
+            )
+        except Exception as e:
+            # Fallo silencioso si no hay credenciales SMTP configuradas
+            pass
+
         request.session['carrito'] = {}
-        messages.success(request, f'¡Compra realizada! Código: #{venta.venta_codigo}')
+        messages.success(request, f'¡Compra realizada! Código: #{venta.venta_codigo}. Se ha enviado un correo de confirmación.')
         return redirect('/pedidos/')
     
     return render(request, 'tienda/checkout.html', {
@@ -277,21 +323,21 @@ def checkout(request):
         'total': total,
         'total_formateado': f"${total:,.0f}",
         'metodos_pago': metodos_pago,
-        'cliente': cliente,
+        'user': user,
     })
 
 
 @login_required_user
 def pedidos(request):
     user_id = request.session.get('user_id')
-    ventas = Venta.objects.filter(user_id=user_id).select_related('metodo_pago').order_by('-venta_fecha', '-venta_hora')
+    ventas = Venta.objects.filter(comprador_id=user_id).select_related('metodo_pago').order_by('-venta_fecha', '-venta_hora')
     return render(request, 'tienda/pedidos.html', {'ventas': ventas})
 
 
 @login_required_user
 def pedido_detalle(request, pk):
     user_id = request.session.get('user_id')
-    venta = get_object_or_404(Venta, pk=pk, user_id=user_id)
+    venta = get_object_or_404(Venta, pk=pk, comprador_id=user_id)
     detalles = VentaDetalle.objects.filter(venta=venta).select_related('producto')
     return render(request, 'tienda/pedido_detalle.html', {
         'venta': venta,
@@ -305,21 +351,12 @@ def perfil(request):
     user_id = request.session.get('user_id')
     user = get_object_or_404(User, pk=user_id)
     
-    try:
-        cliente = Cliente.objects.get(user_id=user_id)
-    except Cliente.DoesNotExist:
-        cliente = None
-    
     if request.method == 'POST':
         user.name = request.POST.get('name', '')
+        user.telefono = request.POST.get('telefono', '')
+        user.direccion = request.POST.get('direccion', '')
+        user.numero_documento = request.POST.get('documento', '')
         user.save()
-        
-        if cliente:
-            cliente.cliente_nombre = request.POST.get('name', '')
-            cliente.cliente_telefono = request.POST.get('telefono', '')
-            cliente.cliente_direccion = request.POST.get('direccion', '')
-            cliente.cliente_numero_documento = request.POST.get('documento', '')
-            cliente.save()
         
         request.session['user_name'] = user.name
         messages.success(request, 'Perfil actualizado.')
@@ -327,5 +364,4 @@ def perfil(request):
     
     return render(request, 'tienda/perfil.html', {
         'user': user,
-        'cliente': cliente,
     })

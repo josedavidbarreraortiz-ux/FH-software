@@ -1,0 +1,99 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Dashboard Vendedor - FH{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-cash-register" style="color:#0d47a1"></i> Panel de Ventas</h1>
+    <span style="color:#555">Bienvenido, <strong>{{ request.session.user_name }}</strong>
+        <span class="badge-fh" style="background:rgba(249,115,22,0.15); color:#f97316; margin-left:0.3rem">VENDEDOR</span>
+    </span>
+</div>
+
+<!-- Quick Action -->
+<div style="margin-bottom:1.5rem">
+    <a href="/panel/ventas/nueva/" class="btn-primary-fh" style="font-size:1.05rem; padding:0.85rem 2rem;">
+        <i class="fas fa-plus-circle"></i> Registrar Nueva Venta
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card purple">
+            <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+            <div class="stat-value">{{ total_ventas }}</div>
+            <div class="stat-label">Ventas Totales</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+            <div class="stat-value">{{ ventas_hoy }}</div>
+            <div class="stat-label">Ventas Hoy</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-value" style="font-size:1.3rem">{{ ingresos_total }}</div>
+            <div class="stat-label">Ingresos Totales</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="stat-icon"><i class="fas fa-user-tag"></i></div>
+            <div class="stat-value">{{ mis_ventas }}</div>
+            <div class="stat-label">Mis Ventas</div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Ventas -->
+<div class="mt-4">
+    <h5 style="margin-bottom:1rem; color:#333; font-weight:700"><i class="fas fa-clock" style="color:#0d47a1"></i> Últimas Ventas</h5>
+    <div class="table-container">
+        <table class="table-fh">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cliente</th>
+                    <th>Vendedor / Origen</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Total</th>
+                    <th>Método Pago</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in ultimas_ventas %}
+                <tr>
+                    <td><span class="badge-fh purple">{{ v.venta_codigo }}</span></td>
+                    <td style="color:#333; font-weight:500">{{ v.comprador.name|default:"-" }}</td>
+                    <td style="color:#666; font-size:0.9rem">
+                        {% if v.user.role == 'USER' %}
+                            <span class="badge-fh" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-globe"></i> Web</span>
+                        {% elif v.user.role == 'ADMIN' %}
+                            <i class="fas fa-user-shield" style="color:#d97706;" title="Admin"></i> {{ v.user.name }}
+                        {% else %}
+                            <i class="fas fa-user-tie" style="color:#059669;" title="Vendedor"></i> {{ v.user.name }}
+                        {% endif %}
+                    </td>
+                    <td>{{ v.venta_fecha }}</td>
+                    <td>{{ v.venta_hora|time:"H:i" }}</td>
+                    <td style="color:#27ae60; font-weight:700">{{ v.total_formateado }}</td>
+                    <td>{{ v.metodo_pago.metodo_pago_nombre|default:"-" }}</td>
+                    <td><a href="/panel/ventas/{{ v.venta_codigo }}/" class="btn-outline-fh btn-sm"><i
+                                class="fas fa-eye"></i> Ver</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center" style="padding:2rem; color:#999">No hay ventas registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

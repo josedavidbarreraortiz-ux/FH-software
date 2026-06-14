@@ -12,6 +12,10 @@ class User(models.Model):
     updated_at = models.DateTimeField(null=True, blank=True)
     enabled = models.BooleanField(default=True, null=True, blank=True)
     role = models.CharField(max_length=255, null=True, blank=True)
+    telefono = models.CharField(max_length=255, null=True, blank=True)
+    direccion = models.CharField(max_length=255, null=True, blank=True)
+    numero_documento = models.CharField(max_length=255, null=True, blank=True)
+    tipo_documento = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         managed = False
@@ -20,9 +24,18 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if isinstance(self.enabled, bytes):
+            self.enabled = self.enabled == b'\x01'
+        super().save(*args, **kwargs)
+
     @property
     def is_admin(self):
         return self.role == 'ADMIN'
+
+    @property
+    def is_vendedor(self):
+        return self.role == 'VENDEDOR'
 
 
 class Categoria(models.Model):
@@ -138,22 +151,6 @@ class Inventario(models.Model):
         return False
 
 
-class Cliente(models.Model):
-    cliente_id = models.AutoField(primary_key=True)
-    cliente_tipo_documento = models.CharField(max_length=255, null=True, blank=True)
-    cliente_numero_documento = models.CharField(max_length=255, null=True, blank=True)
-    cliente_direccion = models.CharField(max_length=255, null=True, blank=True)
-    cliente_telefono = models.CharField(max_length=255, null=True, blank=True)
-    cliente_email = models.CharField(max_length=255, null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, db_column='user_id')
-    cliente_nombre = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        managed = False
-        db_table = 'cliente'
-
-    def __str__(self):
-        return self.cliente_nombre or ''
 
 
 class MetodoPago(models.Model):
@@ -173,8 +170,8 @@ class Venta(models.Model):
     venta_fecha = models.DateField(null=True, blank=True)
     venta_hora = models.TimeField(null=True, blank=True)
     venta_total = models.DecimalField(max_digits=38, decimal_places=2, null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, db_column='user_id')
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, db_column='cliente_id')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, db_column='user_id', related_name='ventas_registradas')
+    comprador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, db_column='comprador_id', related_name='compras')
     cantidad = models.IntegerField(null=True, blank=True)
     metodo_pago = models.ForeignKey(MetodoPago, on_delete=models.SET_NULL, null=True, blank=True, db_column='metodo_pago_id')
     observaciones = models.CharField(max_length=255, null=True, blank=True)

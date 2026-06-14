@@ -26,6 +26,8 @@
                 <td>
                     {% if u.role == 'ADMIN' %}
                     <span class="badge-fh purple">ADMIN</span>
+                    {% elif u.role == 'VENDEDOR' %}
+                    <span class="badge-fh" style="background:rgba(249,115,22,0.15); color:#f97316">VENDEDOR</span>
                     {% else %}
                     <span class="badge-fh info">USER</span>
                     {% endif %}

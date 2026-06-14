@@ -73,6 +73,7 @@
                 <tr>
                     <th>#</th>
                     <th>Cliente</th>
+                    <th>Origen / Vendedor</th>
                     <th>Fecha</th>
                     <th>Total</th>
                     <th>Método Pago</th>
@@ -82,7 +83,16 @@
                 {% for v in ultimas_ventas %}
                 <tr>
                     <td><span class="badge-fh purple">{{ v.venta_codigo }}</span></td>
-                    <td>{{ v.cliente.cliente_nombre|default:"-" }}</td>
+                    <td>{{ v.comprador.name|default:"-" }}</td>
+                    <td style="color:#666; font-size:0.9rem">
+                        {% if v.user.role == 'USER' %}
+                            <span class="badge-fh" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-globe"></i> Página Web</span>
+                        {% elif v.user.role == 'ADMIN' %}
+                            <i class="fas fa-user-shield" style="color:#d97706;" title="Admin"></i> {{ v.user.name }}
+                        {% else %}
+                            <i class="fas fa-user-tie" style="color:#059669;" title="Vendedor"></i> {{ v.user.name }}
+                        {% endif %}
+                    </td>
                     <td>{{ v.venta_fecha }} {{ v.venta_hora|time:"H:i" }}</td>
                     <td style="color:var(--success); font-weight:600">{{ v.total_formateado }}</td>
                     <td>{{ v.metodo_pago.metodo_pago_nombre|default:"-" }}</td>

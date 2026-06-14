@@ -1,0 +1,376 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ titulo }} - Admin{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-cash-register" style="color:#0d47a1"></i> {{ titulo }}</h1>
+    <a href="/panel/ventas/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Volver</a>
+</div>
+
+<form method="post" id="ventaForm">
+    {% csrf_token %}
+    <input type="hidden" name="items_json" id="itemsJson" value="[]">
+
+    <div class="row g-4">
+        <!-- Left: Sale Info -->
+        <div class="col-md-5">
+            <div class="card-fh">
+                <div class="card-body" style="padding:1.5rem">
+                    <h6 style="color:#0d47a1; margin-bottom:1.2rem; font-weight:700; font-size:1rem;">
+                        <i class="fas fa-info-circle"></i> Información de la Venta
+                    </h6>
+
+                    <div class="form-check" style="margin-bottom:1rem">
+                        <input type="checkbox" class="form-check-input" id="esVentaLocal" name="es_venta_local" value="1">
+                        <label class="form-check-label" for="esVentaLocal" style="color:#0d47a1; font-weight:600">Venta rápida en local</label>
+                    </div>
+
+                    <div class="form-group" id="grupoCompradorExistente">
+                        <label class="form-label-fh">Comprador Registrado *</label>
+                        <select name="comprador_id" class="form-control-fh form-select-fh" required id="clienteSelect">
+                            <option value="">Seleccionar comprador...</option>
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}">{{ u.name }} — {{ u.numero_documento|default:"Sin doc." }}</option>
+                            {% endfor %}
+                        </select>
+                        <div style="margin-top:0.8rem">
+                            <label class="form-label-fh" style="font-size:0.85rem; color:#666">Actualizar o añadir dirección de envío (Opcional)</label>
+                            <input type="text" name="direccion_envio" id="direccionEnvio" class="form-control-fh" placeholder="Ej: Calle 100 # 20-30" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div id="grupoCompradorLocal" style="display:none; background:#f8f9fa; padding:1rem; border-radius:8px; margin-bottom:1rem; border:1px solid #e0e0e0">
+                        <h6 style="font-size:0.9rem; color:#666; margin-bottom:0.8rem">Datos para venta rápida</h6>
+                        <div class="form-group mb-2">
+                            <label class="form-label-fh">Nombre Completo *</label>
+                            <input type="text" name="local_nombre" id="localNombre" class="form-control-fh" placeholder="Ej: Juan Pérez">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label-fh">Cédula / Teléfono *</label>
+                            <input type="text" name="local_documento" id="localDocumento" class="form-control-fh" placeholder="Ej: 10203040">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label-fh">Método de Pago *</label>
+                        <select name="metodo_pago" class="form-control-fh form-select-fh" required>
+                            <option value="">Seleccionar...</option>
+                            {% for mp in metodos_pago %}
+                            <option value="{{ mp.metodo_pago_id }}">{{ mp.metodo_pago_nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label-fh">Observaciones</label>
+                        <textarea name="observaciones" class="form-control-fh" rows="3" placeholder="Notas adicionales..." style="resize:vertical"></textarea>
+                    </div>
+
+                    <!-- Total Box -->
+                    <div style="background:linear-gradient(135deg, #e3f2fd, #f3e5f5); border-radius:12px; padding:1.2rem; margin-top:0.5rem; border:2px solid #d1d9e6">
+                        <div style="display:flex; justify-content:space-between; align-items:center">
+                            <span style="color:#555; font-size:0.95rem; font-weight:600">
+                                <i class="fas fa-receipt" style="color:#0d47a1"></i> Total de la Venta
+                            </span>
+                            <span id="totalVenta" style="color:#27ae60; font-size:1.8rem; font-weight:800">$0</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid rgba(0,0,0,0.08)">
+                            <span style="color:#888; font-size:0.85rem">Productos en la venta</span>
+                            <span id="totalItems" style="color:#333; font-weight:700; font-size:1.1rem">0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-fh" style="width:100%; margin-top:1.2rem; padding:0.85rem; font-size:1.05rem; justify-content:center" id="btnSubmit" disabled>
+                        <i class="fas fa-check-circle"></i> Registrar Venta
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Products -->
+        <div class="col-md-7">
+            <div class="card-fh" style="overflow:visible">
+                <div class="card-body" style="padding:1.5rem">
+                    <h6 style="color:#0d47a1; margin-bottom:1.2rem; font-weight:700; font-size:1rem;">
+                        <i class="fas fa-box"></i> Agregar Productos
+                    </h6>
+
+                    <!-- Search -->
+                    <div class="form-group" style="position:relative; margin-bottom:0">
+                        <div style="position:relative">
+                            <i class="fas fa-search" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:#999; z-index:2"></i>
+                            <input type="text" id="buscarProducto" class="form-control-fh"
+                                placeholder="Buscar producto por nombre o marca..."
+                                autocomplete="off"
+                                style="padding-left:2.5rem">
+                        </div>
+                        <div id="searchResults" style="
+                            position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:9999;
+                            background:#fff; border:2px solid #e0e0e0; border-radius:12px;
+                            max-height:280px; overflow-y:auto; display:none;
+                            box-shadow:0 12px 40px rgba(0,0,0,0.15);
+                        "></div>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <div style="border-top:1px solid #eee">
+                    <table class="table-fh" id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th style="width:110px; text-align:center">Cantidad</th>
+                                <th style="text-align:right">Precio Unit.</th>
+                                <th style="text-align:right">Subtotal</th>
+                                <th style="width:50px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                            <tr id="emptyRow">
+                                <td colspan="5" style="padding:3rem 2rem; text-align:center; color:#bbb">
+                                    <i class="fas fa-cart-plus" style="font-size:2.5rem; display:block; margin-bottom:0.8rem; color:#ddd"></i>
+                                    <span style="font-size:0.95rem">Busca y agrega productos a la venta</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var productosData = {{ productos_json|safe }};
+    var items = [];
+
+    var searchInput = document.getElementById('buscarProducto');
+    var searchResults = document.getElementById('searchResults');
+    var itemsBody = document.getElementById('itemsBody');
+    var emptyRow = document.getElementById('emptyRow');
+    var totalVentaEl = document.getElementById('totalVenta');
+    var totalItemsEl = document.getElementById('totalItems');
+    var itemsJsonInput = document.getElementById('itemsJson');
+    var btnSubmit = document.getElementById('btnSubmit');
+
+    var esVentaLocal = document.getElementById('esVentaLocal');
+    var grupoCompradorExistente = document.getElementById('grupoCompradorExistente');
+    var grupoCompradorLocal = document.getElementById('grupoCompradorLocal');
+    var clienteSelect = document.getElementById('clienteSelect');
+    var localNombre = document.getElementById('localNombre');
+    var localDocumento = document.getElementById('localDocumento');
+
+    if (esVentaLocal) {
+        esVentaLocal.addEventListener('change', function() {
+            if (this.checked) {
+                grupoCompradorExistente.style.display = 'none';
+                clienteSelect.required = false;
+                
+                grupoCompradorLocal.style.display = 'block';
+                localNombre.required = true;
+                localDocumento.required = true;
+            } else {
+                grupoCompradorExistente.style.display = 'block';
+                clienteSelect.required = true;
+                
+                grupoCompradorLocal.style.display = 'none';
+                localNombre.required = false;
+                localDocumento.required = false;
+            }
+        });
+    }
+
+    function formatPrice(n) {
+        return '$' + Math.round(n).toLocaleString('es-CO');
+    }
+
+    function updateTotals() {
+        var total = 0;
+        var count = 0;
+        for (var i = 0; i < items.length; i++) {
+            total += items[i].precio * items[i].cantidad;
+            count += items[i].cantidad;
+        }
+        totalVentaEl.textContent = formatPrice(total);
+        totalItemsEl.textContent = count;
+
+        var jsonArr = [];
+        for (var j = 0; j < items.length; j++) {
+            jsonArr.push({producto_id: items[j].id, cantidad: items[j].cantidad});
+        }
+        itemsJsonInput.value = JSON.stringify(jsonArr);
+        btnSubmit.disabled = items.length === 0;
+        emptyRow.style.display = items.length === 0 ? '' : 'none';
+    }
+
+    function renderItems() {
+        var rows = itemsBody.querySelectorAll('tr:not(#emptyRow)');
+        for (var r = 0; r < rows.length; r++) rows[r].remove();
+
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td style="color:#333; font-weight:600">' +
+                    it.nombre +
+                    '<br><small style="color:#999; font-weight:400">' + it.marca + ' · Stock: ' + it.stock + '</small>' +
+                '</td>' +
+                '<td style="text-align:center">' +
+                    '<input type="number" min="1" max="' + it.stock + '" value="' + it.cantidad + '"' +
+                    ' class="form-control-fh" style="width:70px; text-align:center; padding:0.4rem; margin:0 auto; display:block"' +
+                    ' data-idx="' + i + '" onchange="window._updateQty(this)">' +
+                '</td>' +
+                '<td style="text-align:right; color:#555">' + formatPrice(it.precio) + '</td>' +
+                '<td style="text-align:right; color:#27ae60; font-weight:700">' + formatPrice(it.precio * it.cantidad) + '</td>' +
+                '<td style="text-align:center">' +
+                    '<button type="button" onclick="window._removeItem(' + i + ')"' +
+                    ' style="background:#fce4ec; color:#e53935; border:none; border-radius:8px; width:34px; height:34px; cursor:pointer; font-size:0.85rem; transition:all 0.2s"' +
+                    ' onmouseenter="this.style.background=\'#e53935\';this.style.color=\'#fff\'"' +
+                    ' onmouseleave="this.style.background=\'#fce4ec\';this.style.color=\'#e53935\'"' +
+                    ' title="Eliminar">' +
+                        '<i class="fas fa-trash"></i>' +
+                    '</button>' +
+                '</td>';
+            itemsBody.insertBefore(tr, emptyRow);
+        }
+        updateTotals();
+    }
+
+    window._updateQty = function(input) {
+        var idx = parseInt(input.dataset.idx);
+        var val = parseInt(input.value) || 1;
+        if (val < 1) val = 1;
+        if (val > items[idx].stock) {
+            val = items[idx].stock;
+            input.value = val;
+        }
+        items[idx].cantidad = val;
+        renderItems();
+    };
+
+    window._removeItem = function(idx) {
+        items.splice(idx, 1);
+        renderItems();
+    };
+
+    function addProduct(prod) {
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].id === prod.id) {
+                if (items[i].cantidad < items[i].stock) items[i].cantidad++;
+                renderItems();
+                return;
+            }
+        }
+        if (prod.stock <= 0) {
+            alert('Este producto no tiene stock disponible.');
+            return;
+        }
+        items.push({
+            id: prod.id,
+            nombre: prod.nombre,
+            marca: prod.marca,
+            precio: prod.precio,
+            stock: prod.stock,
+            cantidad: 1
+        });
+        searchInput.value = '';
+        searchResults.style.display = 'none';
+        renderItems();
+    }
+
+    searchInput.addEventListener('input', function() {
+        var q = this.value.toLowerCase().trim();
+        if (q.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        var filtered = [];
+        for (var i = 0; i < productosData.length; i++) {
+            var p = productosData[i];
+            if (p.nombre.toLowerCase().indexOf(q) !== -1 || p.marca.toLowerCase().indexOf(q) !== -1) {
+                filtered.push(p);
+            }
+            if (filtered.length >= 8) break;
+        }
+
+        if (filtered.length === 0) {
+            searchResults.innerHTML = '<div style="padding:1.2rem; color:#999; text-align:center"><i class="fas fa-search" style="margin-right:0.5rem"></i>No se encontraron productos</div>';
+        } else {
+            var html = '';
+            for (var j = 0; j < filtered.length; j++) {
+                var fp = filtered[j];
+                var stockColor = fp.stock > 0 ? '#27ae60' : '#e53935';
+                var stockText = fp.stock > 0 ? 'Stock: ' + fp.stock : 'Sin stock';
+                html += '<div class="venta-search-item" data-id="' + fp.id + '">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:flex-start">' +
+                        '<div>' +
+                            '<div style="color:#333; font-weight:600; font-size:0.9rem">' + fp.nombre + '</div>' +
+                            '<div style="color:#999; font-size:0.8rem; margin-top:2px">' + fp.marca + ' · <span style="color:' + stockColor + '">' + stockText + '</span></div>' +
+                        '</div>' +
+                        '<div style="color:#27ae60; font-weight:700; font-size:0.95rem; white-space:nowrap; margin-left:1rem">' + formatPrice(fp.precio) + '</div>' +
+                    '</div>' +
+                '</div>';
+            }
+            searchResults.innerHTML = html;
+        }
+        searchResults.style.display = 'block';
+    });
+
+    searchResults.addEventListener('click', function(e) {
+        var item = e.target.closest('.venta-search-item');
+        if (item) {
+            var id = parseInt(item.getAttribute('data-id'));
+            for (var i = 0; i < productosData.length; i++) {
+                if (productosData[i].id === id) {
+                    addProduct(productosData[i]);
+                    break;
+                }
+            }
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    document.getElementById('ventaForm').addEventListener('submit', function(e) {
+        if (items.length === 0) {
+            e.preventDefault();
+            alert('Debes agregar al menos un producto.');
+            return;
+        }
+        updateTotals();
+    });
+})();
+</script>
+
+<style>
+    .venta-search-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.15s ease;
+    }
+    .venta-search-item:last-child {
+        border-bottom: none;
+    }
+    .venta-search-item:hover {
+        background: #e3f2fd;
+    }
+    .venta-search-item:first-child {
+        border-radius: 10px 10px 0 0;
+    }
+    .venta-search-item:last-child {
+        border-radius: 0 0 10px 10px;
+    }
+    .venta-search-item:only-child {
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

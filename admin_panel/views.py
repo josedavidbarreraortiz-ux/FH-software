@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from accounts.models import (
     User, Producto, Categoria, Inventario, Venta, VentaDetalle,
-    Cliente, MovimientoInventario, MetodoPago, AtributoValor, ProductoAtributo
+    MovimientoInventario, MetodoPago, AtributoValor, ProductoAtributo
 )
 from functools import wraps
 from datetime import date, datetime
@@ -19,6 +19,19 @@ def admin_required(view_func):
         user_role = request.session.get('user_role')
         if not user_id or user_role != 'ADMIN':
             messages.error(request, 'Acceso denegado. Se requiere rol de administrador.')
+            return redirect('/accounts/login/')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def staff_required(view_func):
+    """Permite acceso a ADMIN y VENDEDOR."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        user_id = request.session.get('user_id')
+        user_role = request.session.get('user_role')
+        if not user_id or user_role not in ('ADMIN', 'VENDEDOR'):
+            messages.error(request, 'Acceso denegado.')
             return redirect('/accounts/login/')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -54,8 +67,14 @@ def _handle_imagen_upload(request, producto):
         producto.save()
 
 
-@admin_required
+@staff_required
 def dashboard(request):
+    user_role = request.session.get('user_role')
+    
+    # VENDEDOR solo ve dashboard de ventas
+    if user_role == 'VENDEDOR':
+        return vendedor_dashboard(request)
+    
     total_productos = Producto.objects.count()
     total_categorias = Categoria.objects.count()
     total_usuarios = User.objects.count()
@@ -73,7 +92,7 @@ def dashboard(request):
     except:
         stock_bajo = 0
     
-    ultimas_ventas = Venta.objects.select_related('cliente', 'user', 'metodo_pago').order_by('-venta_fecha', '-venta_hora')[:5]
+    ultimas_ventas = Venta.objects.select_related('comprador', 'user', 'metodo_pago').order_by('-venta_fecha', '-venta_hora')[:5]
     
     context = {
         'total_productos': total_productos,
@@ -86,6 +105,32 @@ def dashboard(request):
         'ultimas_ventas': ultimas_ventas,
     }
     return render(request, 'admin_panel/dashboard.html', context)
+
+
+def vendedor_dashboard(request):
+    """Dashboard limitado para vendedores: solo info de ventas."""
+    from django.db.models import Sum
+    
+    total_ventas = Venta.objects.count()
+    ventas_hoy = Venta.objects.filter(venta_fecha=date.today()).count()
+    ingresos_total = Venta.objects.aggregate(total=Sum('venta_total'))['total'] or 0
+    
+    # Ventas del vendedor actual
+    user_id = request.session.get('user_id')
+    mis_ventas = Venta.objects.filter(user_id=user_id).count()
+    
+    ultimas_ventas = Venta.objects.select_related(
+        'comprador', 'user', 'metodo_pago'
+    ).order_by('-venta_fecha', '-venta_hora')[:10]
+    
+    context = {
+        'total_ventas': total_ventas,
+        'ventas_hoy': ventas_hoy,
+        'ingresos_total': f"${ingresos_total:,.0f}" if ingresos_total else "$0",
+        'mis_ventas': mis_ventas,
+        'ultimas_ventas': ultimas_ventas,
+    }
+    return render(request, 'admin_panel/dashboard_vendedor.html', context)
 
 
 # ======================== PRODUCTOS ========================
@@ -142,7 +187,6 @@ def producto_create(request):
             foto=request.POST.get('foto', ''),
         )
         
-        # Manejar upload de imagen
         _handle_imagen_upload(request, producto)
         
         color_id = request.POST.get('color')
@@ -208,13 +252,11 @@ def producto_edit(request, pk):
         producto.resumen = request.POST.get('resumen', '')
         producto.producto_estado = request.POST.get('estado', 'Activo')
         
-        # Manejar foto: si hay archivo, se sube; si no, se mantiene la actual
         foto = request.POST.get('foto', '')
         if foto and 'imagenFile' not in request.FILES:
             producto.foto = foto
         producto.save()
         
-        # Manejar upload de imagen
         _handle_imagen_upload(request, producto)
         
         color_id = request.POST.get('color')
@@ -266,7 +308,6 @@ def color_nuevo(request):
         if not nombre:
             return JsonResponse({'success': False, 'mensaje': 'El nombre del color es requerido'})
         
-        # Verificar si ya existe
         if AtributoValor.objects.filter(atributo_id=1, valor__iexact=nombre).exists():
             return JsonResponse({'success': False, 'mensaje': 'Este color ya existe'})
         
@@ -394,6 +435,9 @@ def usuario_create(request):
         email = request.POST.get('email', '')
         password = request.POST.get('password', '')
         role = request.POST.get('role', 'USER')
+        telefono = request.POST.get('telefono', '')
+        direccion = request.POST.get('direccion', '')
+        numero_documento = request.POST.get('numero_documento', '')
         
         if User.objects.filter(email=email).exists():
             messages.error(request, 'Este correo ya existe.')
@@ -405,6 +449,7 @@ def usuario_create(request):
         User.objects.create(
             name=name, email=email, password=hashed,
             role=role, enabled=True,
+            telefono=telefono, direccion=direccion, numero_documento=numero_documento,
             created_at=datetime.now(), updated_at=datetime.now()
         )
         messages.success(request, f'Usuario "{name}" creado.')
@@ -420,6 +465,9 @@ def usuario_edit(request, pk):
         usuario.email = request.POST.get('email', '')
         usuario.role = request.POST.get('role', 'USER')
         usuario.enabled = request.POST.get('enabled') == 'on'
+        usuario.telefono = request.POST.get('telefono', '')
+        usuario.direccion = request.POST.get('direccion', '')
+        usuario.numero_documento = request.POST.get('numero_documento', '')
         
         password = request.POST.get('password', '')
         if password:
@@ -435,6 +483,30 @@ def usuario_edit(request, pk):
 
 
 @admin_required
+def usuario_send_reset(request, pk):
+    from accounts.views import _generate_token, _hash_token, _send_reset_email
+    
+    usuario = get_object_or_404(User, pk=pk, enabled=True)
+    try:
+        raw_token = _generate_token()
+        token_data = f"{int(datetime.now().timestamp())}|{_hash_token(raw_token)}"
+        usuario.remember_token = token_data
+        usuario.updated_at = datetime.now()
+        usuario.save(update_fields=['remember_token', 'updated_at'])
+
+        protocol = 'https' if request.is_secure() else 'http'
+        host = request.get_host()
+        reset_url = f"{protocol}://{host}/accounts/password-reset/confirm/{usuario.id}/{raw_token}/"
+
+        _send_reset_email(usuario, reset_url)
+        messages.success(request, f'Enlace de recuperación enviado al correo {usuario.email}.')
+    except Exception as e:
+        messages.error(request, 'Hubo un error al enviar el enlace de recuperación.')
+        
+    return redirect(f'/panel/usuarios/{pk}/editar/')
+
+
+@admin_required
 def usuario_delete(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
@@ -445,13 +517,13 @@ def usuario_delete(request, pk):
 
 # ======================== VENTAS ========================
 
-@admin_required
+@staff_required
 def ventas_list(request):
-    ventas = Venta.objects.select_related('cliente', 'user', 'metodo_pago').all().order_by('-venta_fecha', '-venta_hora')
+    ventas = Venta.objects.select_related('comprador', 'user', 'metodo_pago').all().order_by('-venta_fecha', '-venta_hora')
     return render(request, 'admin_panel/ventas.html', {'ventas': ventas})
 
 
-@admin_required
+@staff_required
 def venta_detalle_view(request, pk):
     venta = get_object_or_404(Venta, pk=pk)
     detalles = VentaDetalle.objects.filter(venta=venta).select_related('producto')
@@ -461,26 +533,143 @@ def venta_detalle_view(request, pk):
     })
 
 
-# ======================== CLIENTES ========================
+@staff_required
+def venta_create(request):
+    """Registrar una nueva venta desde el panel (ADMIN o VENDEDOR)."""
+    from decimal import Decimal
+    import json
 
-@admin_required
-def clientes_list(request):
-    clientes = Cliente.objects.select_related('user').all().order_by('cliente_id')
-    return render(request, 'admin_panel/clientes.html', {'clientes': clientes})
+    productos = Producto.objects.filter(producto_estado='Activo').select_related('categoria').order_by('producto_nombre')
+    usuarios = User.objects.filter(enabled=True, role='USER').order_by('name')
+    metodos_pago = MetodoPago.objects.all()
 
-
-@admin_required
-def cliente_edit(request, pk):
-    cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
-        cliente.cliente_nombre = request.POST.get('nombre', '')
-        cliente.cliente_numero_documento = request.POST.get('documento', '')
-        cliente.cliente_telefono = request.POST.get('telefono', '')
-        cliente.cliente_email = request.POST.get('email', '')
-        cliente.cliente_direccion = request.POST.get('direccion', '')
-        cliente.save()
-        messages.success(request, 'Cliente actualizado.')
-        return redirect('/panel/clientes/')
-    return render(request, 'admin_panel/cliente_form.html', {
-        'cliente': cliente, 'titulo': 'Editar Cliente'
+        comprador_id = request.POST.get('comprador_id')
+        metodo_pago_id = request.POST.get('metodo_pago')
+        observaciones = request.POST.get('observaciones', '')
+        items_json = request.POST.get('items_json', '[]')
+
+        try:
+            items = json.loads(items_json)
+        except (json.JSONDecodeError, TypeError):
+            messages.error(request, 'Error en los datos de productos.')
+            return redirect('/panel/ventas/nueva/')
+
+        if not items:
+            messages.error(request, 'Debes agregar al menos un producto.')
+            return redirect('/panel/ventas/nueva/')
+
+        es_venta_local = request.POST.get('es_venta_local') == '1'
+
+        if es_venta_local:
+            local_nombre = request.POST.get('local_nombre', '').strip()
+            local_documento = request.POST.get('local_documento', '').strip()
+            
+            if not local_nombre or not local_documento:
+                messages.error(request, 'Debes ingresar el nombre y documento para venta rápida.')
+                return redirect('/panel/ventas/nueva/')
+                
+            comprador = User.objects.filter(numero_documento=local_documento).first()
+            if not comprador:
+                import time
+                dummy_email = f"local_{local_documento}_{int(time.time())}@local.fh"
+                hashed = bcrypt.hashpw('localpassword'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                comprador = User.objects.create(
+                    name=local_nombre,
+                    numero_documento=local_documento,
+                    email=dummy_email,
+                    password=hashed,
+                    role='USER',
+                    enabled=True,
+                    created_at=datetime.now(),
+                    updated_at=datetime.now()
+                )
+            comprador_id = comprador.id
+        elif not comprador_id:
+            messages.error(request, 'Debes seleccionar un comprador.')
+            return redirect('/panel/ventas/nueva/')
+        else:
+            comprador = User.objects.get(pk=comprador_id)
+            direccion_envio = request.POST.get('direccion_envio', '').strip()
+            if direccion_envio:
+                comprador.direccion = direccion_envio
+                comprador.updated_at = datetime.now()
+                comprador.save()
+        # Calcular total
+        total = Decimal('0')
+        detalles_data = []
+        for item in items:
+            try:
+                producto = Producto.objects.get(pk=int(item['producto_id']))
+                cantidad = int(item['cantidad'])
+                precio = producto.producto_precio_venta
+                subtotal = precio * cantidad
+                total += subtotal
+                detalles_data.append({
+                    'producto': producto,
+                    'cantidad': cantidad,
+                    'precio': precio,
+                    'subtotal': subtotal,
+                })
+            except (Producto.DoesNotExist, ValueError, KeyError):
+                continue
+
+        if not detalles_data:
+            messages.error(request, 'No se pudieron procesar los productos.')
+            return redirect('/panel/ventas/nueva/')
+
+        user_id = request.session.get('user_id')
+
+        venta = Venta.objects.create(
+            venta_fecha=date.today(),
+            venta_hora=datetime.now().time(),
+            venta_total=total,
+            user_id=user_id,
+            comprador_id=comprador_id,
+            metodo_pago_id=metodo_pago_id,
+            observaciones=observaciones,
+        )
+
+        for det in detalles_data:
+            VentaDetalle.objects.create(
+                venta=venta,
+                producto=det['producto'],
+                venta_detalle_cantidad=det['cantidad'],
+                venta_detalle_precio_venta=det['precio'],
+                subtotal=det['subtotal'],
+            )
+            MovimientoInventario.objects.create(
+                producto=det['producto'],
+                movimiento_tipo='SALIDA',
+                movimiento_cantidad=det['cantidad'],
+                movimiento_fecha=date.today(),
+                movimiento_motivo='Venta realizada',
+            )
+
+        messages.success(request, f'Venta #{venta.venta_codigo} registrada exitosamente. Total: ${total:,.0f}')
+        return redirect('/panel/ventas/')
+
+    # Preparar datos de productos como JSON para el JS
+    productos_data = []
+    for p in productos:
+        try:
+            inv = Inventario.objects.get(producto=p)
+            stock = inv.inventario_stock_actual or 0
+        except Inventario.DoesNotExist:
+            stock = 0
+        productos_data.append({
+            'id': p.producto_id,
+            'nombre': p.producto_nombre,
+            'precio': float(p.producto_precio_venta) if p.producto_precio_venta else 0,
+            'marca': p.producto_marca or '',
+            'stock': stock,
+        })
+
+    import json as json_mod
+    return render(request, 'admin_panel/venta_form.html', {
+        'productos': productos,
+        'productos_json': json_mod.dumps(productos_data),
+        'usuarios': usuarios,
+        'metodos_pago': metodos_pago,
+        'titulo': 'Registrar Venta',
     })

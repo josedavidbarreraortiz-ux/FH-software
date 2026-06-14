@@ -10,7 +10,18 @@
         <div class="card-fh">
             <div class="card-body">
                 <h6 style="color:var(--text-muted); margin-bottom:1rem">Información</h6>
-                <p class="product-spec"><strong>Cliente:</strong> {{ venta.cliente.cliente_nombre|default:"-" }}</p>
+                <p class="product-spec"><strong>Cliente:</strong> {{ venta.comprador.name|default:"-" }}</p>
+                <p class="product-spec">
+                    <strong>Vendedor / Origen:</strong>
+                    {% if venta.user.role == 'USER' %}
+                        Página Web
+                    {% elif venta.user.role == 'ADMIN' %}
+                        {{ venta.user.name }} (Admin)
+                    {% else %}
+                        {{ venta.user.name }} (Vendedor)
+                    {% endif %}
+                </p>
+                <p class="product-spec"><strong>Dirección:</strong> {{ venta.comprador.direccion|default:"Sin dirección registrada" }}</p>
                 <p class="product-spec"><strong>Fecha:</strong> {{ venta.venta_fecha }} {{ venta.venta_hora|time:"H:i" }}</p>
                 <p class="product-spec"><strong>Método de pago:</strong> {{ venta.metodo_pago.metodo_pago_nombre|default:"-" }}</p>
                 <p class="product-spec"><strong>Observaciones:</strong> {{ venta.observaciones|default:"Ninguna" }}</p>

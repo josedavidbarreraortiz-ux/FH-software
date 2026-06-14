@@ -19,14 +19,26 @@
                 <input type="email" name="email" class="form-control-fh"
                     value="{{ usuario.email|default:'' }}" required>
             </div>
-            <div class="form-group">
-                <label class="form-label-fh">Contraseña {% if usuario %}(dejar vacío para no cambiar){% endif %}</label>
-                <input type="password" name="password" class="form-control-fh" {% if not usuario %}required{% endif %}>
+            {% if usuario %}
+            <div class="form-group mb-3">
+                <label class="form-label-fh">Contraseña</label>
+                <div style="margin-top:0.3rem">
+                    <a href="/panel/usuarios/{{ usuario.id }}/reset-password/" class="btn-outline-fh" style="font-size:0.9rem; padding:0.6rem 1rem">
+                        <i class="fas fa-envelope"></i> Enviar código de verificación de contraseña al correo
+                    </a>
+                </div>
             </div>
+            {% else %}
+            <div class="form-group">
+                <label class="form-label-fh">Contraseña inicial *</label>
+                <input type="password" name="password" class="form-control-fh" required>
+            </div>
+            {% endif %}
             <div class="form-group">
                 <label class="form-label-fh">Rol</label>
                 <select name="role" class="form-control-fh form-select-fh">
                     <option value="USER" {% if usuario.role == 'USER' %}selected{% endif %}>USER</option>
+                    <option value="VENDEDOR" {% if usuario.role == 'VENDEDOR' %}selected{% endif %}>VENDEDOR</option>
                     <option value="ADMIN" {% if usuario.role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
                 </select>
             </div>
