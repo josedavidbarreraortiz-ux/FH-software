@@ -214,31 +214,71 @@ def checkout(request):
             pass
     
     if request.method == 'POST':
-        nombre = request.POST.get('nombre', '')
-        email = request.POST.get('email', '')
-        telefono = request.POST.get('telefono', '')
-        documento = request.POST.get('documento', '')
-        direccion = request.POST.get('direccion', '')
+        # Rate limit: 1 compra cada 20 segundos
+        last_purchase = request.session.get('last_purchase_time')
+        now = datetime.now().timestamp()
+        if last_purchase and (now - last_purchase) < 20:
+            messages.error(request, 'Por favor, espera 20 segundos entre cada intento de compra.')
+            return redirect('/pedidos/')
+
+        nombre = request.POST.get('nombre', '').strip()
+        email = request.POST.get('email', '').strip()
+        telefono = request.POST.get('telefono', '').strip()
+        documento = request.POST.get('documento', '').strip()
+        direccion = request.POST.get('direccion', '').strip()
         metodo_pago_id = request.POST.get('metodo_pago')
         observaciones = request.POST.get('observaciones', '')
         es_regalo = request.POST.get('es_regalo') == '1'
         
+        # Validaciones de Backend
+        errors = []
         if es_regalo:
-            dest_nombre = request.POST.get('destinatario_nombre', '')
-            dest_telefono = request.POST.get('destinatario_telefono', '')
-            dest_direccion = request.POST.get('destinatario_direccion', '')
+            dest_nombre = request.POST.get('destinatario_nombre', '').strip()
+            dest_telefono = request.POST.get('destinatario_telefono', '').strip()
+            dest_direccion = request.POST.get('destinatario_direccion', '').strip()
             mensaje = request.POST.get('mensaje_regalo', '')
+            
+            if not dest_nombre or len(dest_nombre) < 4:
+                errors.append("El nombre del destinatario debe tener al menos 4 caracteres.")
+            if not dest_telefono or not dest_telefono.isdigit() or len(dest_telefono) != 10:
+                errors.append("El teléfono del destinatario debe tener exactamente 10 dígitos.")
+            if not dest_direccion or len(dest_direccion) < 5 or not any(c.isdigit() for c in dest_direccion):
+                errors.append("La dirección del destinatario debe tener al menos 5 caracteres y contener al menos un número.")
             
             obs_regalo = f"[REGALO] Para: {dest_nombre} | Tel: {dest_telefono} | Dir: {dest_direccion}"
             if mensaje:
                 obs_regalo += f" | Mensaje: {mensaje}"
-                
             observaciones = f"{obs_regalo}\n{observaciones}".strip()
         else:
-            if telefono: user.telefono = telefono
-            if documento: user.numero_documento = documento
-            if direccion: user.direccion = direccion
+            if not telefono or not telefono.isdigit() or len(telefono) != 10:
+                errors.append("El teléfono debe tener exactamente 10 dígitos.")
+            if not documento or not documento.isdigit() or not (6 <= len(documento) <= 12):
+                errors.append("El documento debe tener entre 6 y 12 dígitos.")
+            if not direccion or len(direccion) < 5 or not any(c.isdigit() for c in direccion):
+                errors.append("La dirección debe tener al menos 5 caracteres y contener al menos un número.")
+                
+        if not metodo_pago_id:
+            errors.append("Debes seleccionar un método de pago.")
+            
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return render(request, 'tienda/checkout.html', {
+                'items': items,
+                'total': total,
+                'total_formateado': f"${total:,.0f}",
+                'metodos_pago': metodos_pago,
+                'user': user,
+            })
+            
+        if not es_regalo:
+            user.telefono = telefono
+            user.numero_documento = documento
+            user.direccion = direccion
             user.save()
+            
+        # Registrar el tiempo de la compra para el rate limit
+        request.session['last_purchase_time'] = datetime.now().timestamp()
         
         venta = Venta.objects.create(
             venta_fecha=date.today(),

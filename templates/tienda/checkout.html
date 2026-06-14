@@ -259,6 +259,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var err = document.querySelector('.form-group.has-error') || document.querySelector('#datosRegalo');
             if (err) err.scrollIntoView({ behavior: 'smooth', block: 'center' });
             alert("Por favor, revisa que todos los campos requeridos estén completos y sean válidos.");
+        } else {
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px"></i>Procesando Pago...';
+                btn.style.opacity = '0.7';
+                btn.style.cursor = 'not-allowed';
+            }
         }
     });
 
