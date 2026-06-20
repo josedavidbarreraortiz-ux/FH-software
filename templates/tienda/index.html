@@ -42,11 +42,11 @@
                     <i class="fa-solid fa-box"></i>
                     <span>Pedidos</span>
                 </a>
-                {% if request.session.user_role == 'ADMIN' %}
+                {% if request.session.user_role == 'ADMIN' or request.session.user_role == 'VENDEDOR' %}
                 <div class="icon-divider"></div>
                 <a href="/panel/" class="header-icon-item">
                     <i class="fa-solid fa-cog"></i>
-                    <span>Admin</span>
+                    <span>Panel</span>
                 </a>
                 {% endif %}
                 <div class="icon-divider"></div>
