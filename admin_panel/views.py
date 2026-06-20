@@ -405,12 +405,36 @@ def movimientos_list(request):
 def movimiento_create(request):
     productos = Producto.objects.all().order_by('producto_nombre')
     if request.method == 'POST':
+        producto_id = request.POST.get('producto')
+        tipo = request.POST.get('tipo')
+        cantidad = int(request.POST.get('cantidad', 0))
+        motivo = request.POST.get('motivo', '')
+        
+        # Actualizar inventario
+        try:
+            inventario = Inventario.objects.get(producto_id=producto_id)
+            stock_anterior = inventario.inventario_stock_actual or 0
+            if tipo == 'ENTRADA':
+                stock_nuevo = stock_anterior + cantidad
+            else:
+                stock_nuevo = stock_anterior - cantidad
+            inventario.inventario_stock_actual = stock_nuevo
+            inventario.save()
+        except Inventario.DoesNotExist:
+            stock_anterior = 0
+            if tipo == 'ENTRADA':
+                stock_nuevo = cantidad
+            else:
+                stock_nuevo = -cantidad
+                
         MovimientoInventario.objects.create(
-            producto_id=request.POST.get('producto'),
-            movimiento_tipo=request.POST.get('tipo'),
-            movimiento_cantidad=int(request.POST.get('cantidad', 0)),
+            producto_id=producto_id,
+            movimiento_tipo=tipo,
+            movimiento_cantidad=cantidad,
             movimiento_fecha=date.today(),
-            movimiento_motivo=request.POST.get('motivo', ''),
+            movimiento_motivo=motivo,
+            movimiento_stock_anterior=stock_anterior,
+            movimiento_stock_nuevo=stock_nuevo,
         )
         messages.success(request, 'Movimiento registrado.')
         return redirect('/panel/movimientos/')
@@ -638,12 +662,26 @@ def venta_create(request):
                 venta_detalle_precio_venta=det['precio'],
                 subtotal=det['subtotal'],
             )
+            
+            # Actualizar inventario
+            try:
+                inventario = Inventario.objects.get(producto=det['producto'])
+                stock_anterior = inventario.inventario_stock_actual or 0
+                stock_nuevo = stock_anterior - det['cantidad']
+                inventario.inventario_stock_actual = stock_nuevo
+                inventario.save()
+            except Inventario.DoesNotExist:
+                stock_anterior = 0
+                stock_nuevo = -det['cantidad']
+                
             MovimientoInventario.objects.create(
                 producto=det['producto'],
                 movimiento_tipo='SALIDA',
                 movimiento_cantidad=det['cantidad'],
                 movimiento_fecha=date.today(),
                 movimiento_motivo='Venta realizada',
+                movimiento_stock_anterior=stock_anterior,
+                movimiento_stock_nuevo=stock_nuevo,
             )
 
         messages.success(request, f'Venta #{venta.venta_codigo} registrada exitosamente. Total: ${total:,.0f}')

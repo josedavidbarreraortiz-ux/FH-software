@@ -55,9 +55,15 @@ def catalogo(request):
     
     # Price range filter
     if precio_min:
-        productos = productos.filter(producto_precio_venta__gte=int(precio_min))
+        try:
+            productos = productos.filter(producto_precio_venta__gte=float(precio_min))
+        except ValueError:
+            pass
     if precio_max:
-        productos = productos.filter(producto_precio_venta__lte=int(precio_max))
+        try:
+            productos = productos.filter(producto_precio_venta__lte=float(precio_max))
+        except ValueError:
+            pass
     
     # Ordering
     if orden == 'precio_asc':
@@ -299,12 +305,25 @@ def checkout(request):
                 subtotal=item['subtotal'],
             )
             
+            # Actualizar inventario
+            try:
+                inventario = Inventario.objects.get(producto=item['producto'])
+                stock_anterior = inventario.inventario_stock_actual or 0
+                stock_nuevo = stock_anterior - item['cantidad']
+                inventario.inventario_stock_actual = stock_nuevo
+                inventario.save()
+            except Inventario.DoesNotExist:
+                stock_anterior = 0
+                stock_nuevo = -item['cantidad']
+                
             MovimientoInventario.objects.create(
                 producto=item['producto'],
                 movimiento_tipo='SALIDA',
                 movimiento_cantidad=item['cantidad'],
                 movimiento_fecha=date.today(),
                 movimiento_motivo='Venta realizada',
+                movimiento_stock_anterior=stock_anterior,
+                movimiento_stock_nuevo=stock_nuevo,
             )
         
         # Enviar correo de confirmación en segundo plano (no bloquea la respuesta)
