@@ -307,7 +307,8 @@ def checkout(request):
                 movimiento_motivo='Venta realizada',
             )
         
-        # Enviar correo de confirmación
+        # Enviar correo de confirmación en segundo plano (no bloquea la respuesta)
+        import threading
         from django.core.mail import send_mail
         from django.template.loader import render_to_string
         from django.utils.html import strip_tags
@@ -339,20 +340,22 @@ def checkout(request):
                 'direccion': user.direccion,
             })
 
-        try:
-            html_message = render_to_string('tienda/email_compra.html', ctx)
-            plain_message = strip_tags(html_message)
-            send_mail(
-                subject=f"Confirmación de Compra #{venta.venta_codigo} - FH TechStore",
-                message=plain_message,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@fh.com'),
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=True,
-            )
-        except Exception as e:
-            # Fallo silencioso si no hay credenciales SMTP configuradas
-            pass
+        def _send_email():
+            try:
+                html_message = render_to_string('tienda/email_compra.html', ctx)
+                plain_message = strip_tags(html_message)
+                send_mail(
+                    subject=f"Confirmación de Compra #{venta.venta_codigo} - FH TechStore",
+                    message=plain_message,
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@fh.com'),
+                    recipient_list=[user.email],
+                    html_message=html_message,
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+        threading.Thread(target=_send_email, daemon=True).start()
 
         request.session['carrito'] = {}
         messages.success(request, f'¡Compra realizada! Código: #{venta.venta_codigo}. Se ha enviado un correo de confirmación.')

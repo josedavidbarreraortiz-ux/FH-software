@@ -1605,6 +1605,67 @@ footer {
 }
 
 /* ==========================================
+   SIDEBAR MOBILE TOGGLE & OVERLAY
+   ========================================== */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1001;
+    background: #0d47a1;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(13, 71, 161, 0.4);
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #0a3d8f;
+    transform: scale(1.05);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.sidebar-close {
+    display: none;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.3s ease, background 0.3s ease;
+}
+
+.sidebar-close:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ==========================================
    RESPONSIVE
    ========================================== */
 @media (max-width: 992px) {
@@ -1612,13 +1673,28 @@ footer {
         display: none;
     }
 
+    .sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar-close {
+        display: block;
+    }
+
     .sidebar {
-        display: none;
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
     }
 
     .admin-content {
         margin-left: 0;
         padding: 1rem;
+        padding-top: 4rem;
     }
 
     .features-grid {

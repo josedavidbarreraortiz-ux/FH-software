@@ -12,12 +12,22 @@
 </head>
 
 <body>
-    <div class="admin-layout">
+        <!-- Mobile Toggle Button -->
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="adminSidebar">
             <div class="sidebar-brand">
                 FH Store
                 <span>Panel Administrativo</span>
+                <button class="sidebar-close" id="sidebarClose" aria-label="Cerrar menú">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <ul class="sidebar-nav">
                 <li class="nav-section">Principal</li>
@@ -121,6 +131,30 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/app.js' %}"></script>
+    <script>
+    (function() {
+        var toggle = document.getElementById('sidebarToggle');
+        var sidebar = document.getElementById('adminSidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        var closeBtn = document.getElementById('sidebarClose');
+        if (!toggle || !sidebar) return;
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        toggle.addEventListener('click', openSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+        if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 
