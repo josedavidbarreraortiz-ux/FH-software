@@ -717,6 +717,46 @@ def venta_create(request):
                 movimiento_stock_nuevo=stock_nuevo,
             )
 
+        # Enviar correo de confirmación en segundo plano (si no es una cuenta local)
+        if '@local.fh' not in comprador.email:
+            import threading
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
+            from django.utils.html import strip_tags
+            from django.conf import settings
+            
+            protocol = 'https' if request.is_secure() else 'http'
+            host = request.get_host()
+            base_url = f"{protocol}://{host}"
+            
+            ctx = {
+                'nombre': comprador.name,
+                'venta_codigo': venta.venta_codigo,
+                'es_regalo': False,
+                'items': detalles_data,
+                'total': total,
+                'base_url': base_url,
+                'telefono': comprador.telefono,
+                'direccion': comprador.direccion,
+            }
+            
+            def _send_email():
+                try:
+                    html_message = render_to_string('tienda/email_compra.html', ctx)
+                    plain_message = strip_tags(html_message)
+                    send_mail(
+                        subject=f"Confirmación de Compra #{venta.venta_codigo} - FH TechStore",
+                        message=plain_message,
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@fh.com'),
+                        recipient_list=[comprador.email],
+                        html_message=html_message,
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
+
+            threading.Thread(target=_send_email, daemon=True).start()
+
         messages.success(request, f'Venta #{venta.venta_codigo} registrada exitosamente. Total: ${total:,.0f}')
         return redirect('/panel/ventas/')
 
