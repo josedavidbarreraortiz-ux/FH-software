@@ -107,7 +107,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'josedavidbarreraortiz@gmail.com'    # ← Tu correo Gmail
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'pnkz jwkz uxcm lbpg')    # ← Contraseña de aplicación de Gmail
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'hpmr fhxr rymv ezxu')    # ← Contraseña de aplicación de Gmail
 DEFAULT_FROM_EMAIL = 'FH TechStore <josedavidbarreraortiz@gmail.com>'
 
 # Tiempo de expiración del token de recuperación (en segundos) — 1 hora
