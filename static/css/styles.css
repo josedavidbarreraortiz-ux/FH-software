@@ -2458,3 +2458,49 @@ footer {
         position: static;
     }
 }
+
+/* ==========================================
+   PAGINATION (Admin Tables)
+   ========================================== */
+.pagination-fh {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 10px 0;
+}
+
+.pagination-fh .btn-page {
+    background: white;
+    border: 1px solid #e0e0e0;
+    color: #0d47a1;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.pagination-fh .btn-page:hover:not(.disabled) {
+    background: #0d47a1;
+    color: white;
+    border-color: #0d47a1;
+}
+
+.pagination-fh .btn-page.disabled {
+    color: #ccc;
+    background: #f9f9f9;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.pagination-fh .page-info {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 600;
+}

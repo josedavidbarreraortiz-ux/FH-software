@@ -31,13 +31,21 @@ function updateQuantity(input, delta) {
 }
 
 // Table Filtering Logic
-function setupTableFilter(searchInputId, tableId, filters = []) {
+function setupTableFilter(searchInputId, tableId, filters = [], rowsPerPage = 10) {
     const searchInput = document.getElementById(searchInputId);
     const table = document.getElementById(tableId);
     if (!searchInput || !table) return;
 
     const tbody = table.querySelector('tbody');
-    const rows = tbody.querySelectorAll('tr');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Create pagination container if it doesn't exist
+    let paginationContainer = table.nextElementSibling;
+    if (!paginationContainer || !paginationContainer.classList.contains('pagination-fh')) {
+        paginationContainer = document.createElement('div');
+        paginationContainer.className = 'pagination-fh';
+        table.parentNode.insertBefore(paginationContainer, table.nextSibling);
+    }
 
     const filterSelects = filters.map(f => ({
         element: document.getElementById(f.selectId),
@@ -45,12 +53,65 @@ function setupTableFilter(searchInputId, tableId, filters = []) {
         exactMatch: f.exactMatch || false
     }));
 
+    let currentPage = 1;
+    let filteredRows = [];
+
+    function renderPagination() {
+        paginationContainer.innerHTML = '';
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        
+        if (totalPages <= 1) return; // Hide pagination if only 1 page
+
+        const createBtn = (text, disabled, onClick) => {
+            const btn = document.createElement('button');
+            btn.innerHTML = text;
+            btn.className = disabled ? 'btn-page disabled' : 'btn-page';
+            if (!disabled) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    onClick();
+                });
+            }
+            return btn;
+        };
+
+        const prevBtn = createBtn('<i class="fas fa-chevron-left"></i>', currentPage === 1, () => {
+            currentPage--;
+            displayRows();
+        });
+        paginationContainer.appendChild(prevBtn);
+
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+        paginationContainer.appendChild(pageInfo);
+
+        const nextBtn = createBtn('<i class="fas fa-chevron-right"></i>', currentPage === totalPages, () => {
+            currentPage++;
+            displayRows();
+        });
+        paginationContainer.appendChild(nextBtn);
+    }
+
+    function displayRows() {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        // Hide all first
+        rows.forEach(row => row.style.display = 'none');
+
+        // Show only rows for current page
+        const rowsToShow = filteredRows.slice(startIndex, endIndex);
+        rowsToShow.forEach(row => row.style.display = '');
+
+        renderPagination();
+    }
+
     function filterTable() {
         const query = searchInput.value.toLowerCase();
         
-        rows.forEach(row => {
-            // Skip empty state row
-            if (row.querySelector('.empty-state')) return;
+        filteredRows = rows.filter(row => {
+            if (row.querySelector('.empty-state')) return false;
 
             let textMatch = row.textContent.toLowerCase().includes(query);
             let selectMatch = true;
@@ -71,12 +132,19 @@ function setupTableFilter(searchInputId, tableId, filters = []) {
                 }
             });
 
-            if (textMatch && selectMatch) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            return textMatch && selectMatch;
         });
+
+        // Show empty state if needed
+        const emptyRow = rows.find(r => r.querySelector('.empty-state'));
+        if (filteredRows.length === 0 && emptyRow) {
+            emptyRow.style.display = '';
+        } else if (emptyRow) {
+            emptyRow.style.display = 'none';
+        }
+
+        currentPage = 1; // Reset to page 1 on filter
+        displayRows();
     }
 
     searchInput.addEventListener('input', filterTable);
@@ -85,4 +153,7 @@ function setupTableFilter(searchInputId, tableId, filters = []) {
             f.element.addEventListener('change', filterTable);
         }
     });
+
+    // Initial render
+    filterTable();
 }
