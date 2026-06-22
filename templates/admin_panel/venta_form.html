@@ -244,6 +244,7 @@
         var val = parseInt(input.value) || 1;
         if (val < 1) val = 1;
         if (val > items[idx].stock) {
+            alert('Stock insuficiente para "' + items[idx].nombre + '". Disponible: ' + items[idx].stock);
             val = items[idx].stock;
             input.value = val;
         }
@@ -343,6 +344,18 @@
         if (items.length === 0) {
             e.preventDefault();
             alert('Debes agregar al menos un producto.');
+            return;
+        }
+        // Validar stock antes de enviar
+        var errores = [];
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].cantidad > items[i].stock) {
+                errores.push(items[i].nombre + ' (pedido: ' + items[i].cantidad + ', stock: ' + items[i].stock + ')');
+            }
+        }
+        if (errores.length > 0) {
+            e.preventDefault();
+            alert('Stock insuficiente para:\n' + errores.join('\n'));
             return;
         }
         updateTotals();

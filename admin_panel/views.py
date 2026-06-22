@@ -642,6 +642,24 @@ def venta_create(request):
             messages.error(request, 'No se pudieron procesar los productos.')
             return redirect('/panel/ventas/nueva/')
 
+        # Validar stock disponible para cada producto
+        errores_stock = []
+        for det in detalles_data:
+            try:
+                inventario = Inventario.objects.get(producto=det['producto'])
+                stock_disponible = inventario.inventario_stock_actual or 0
+            except Inventario.DoesNotExist:
+                stock_disponible = 0
+            if det['cantidad'] > stock_disponible:
+                errores_stock.append(
+                    f'"{det["producto"].producto_nombre}" — pedido: {det["cantidad"]}, disponible: {stock_disponible}'
+                )
+        if errores_stock:
+            messages.error(request, 'Stock insuficiente para los siguientes productos:')
+            for err in errores_stock:
+                messages.error(request, err)
+            return redirect('/panel/ventas/nueva/')
+
         user_id = request.session.get('user_id')
 
         venta = Venta.objects.create(

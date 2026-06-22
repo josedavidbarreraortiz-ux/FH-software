@@ -5,8 +5,16 @@
     <h1><i class="fas fa-shopping-cart" style="color:var(--accent)"></i> Ventas</h1>
     <a href="/panel/ventas/nueva/" class="btn-primary-fh"><i class="fas fa-plus"></i> Nueva Venta</a>
 </div>
+
+<div class="admin-toolbar" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+    <div style="position: relative; max-width: 280px; flex: 1; min-width: 180px;">
+        <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.85rem;"></i>
+        <input type="text" id="searchVentas" class="form-control-fh" placeholder="Buscar venta..." style="padding-left: 2.2rem; width: 100%; font-size: 0.9rem; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+    </div>
+</div>
+
 <div class="table-container">
-    <table class="table-fh">
+    <table class="table-fh" id="tableVentas">
         <thead>
             <tr>
                 <th>#</th>
@@ -50,4 +58,12 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupTableFilter('searchVentas', 'tableVentas', []);
+});
+</script>
 {% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Reporte de Vendedores - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1><i class="fas fa-user-tie" style="color:#667eea"></i> Reporte de Vendedores</h1>
+    <a href="/panel/reportes/" class="btn-outline-fh"><i class="fas fa-arrow-left"></i> Reportes</a>
+</div>
+
+<!-- Filtros para PDF -->
+<div class="card-fh" style="margin-bottom:1.5rem">
+    <div class="card-body" style="padding:1.5rem">
+        <h6 style="color:#0d47a1; margin-bottom:1rem; font-weight:700; font-size:0.95rem;">
+            <i class="fas fa-filter"></i> Filtros del Reporte PDF
+        </h6>
+        <form id="filtrosForm" method="get" action="/panel/reportes/vendedores/pdf/" target="_blank">
+            <div class="row g-3" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                <div style="flex:1; min-width:200px;">
+                    <label class="form-label-fh">Vendedor</label>
+                    <select name="vendedor" class="form-control-fh" style="width:100%">
+                        <option value="">Todos los vendedores</option>
+                        {% for v in vendedores %}
+                        <option value="{{ v.id }}">{{ v.name }} ({{ v.role }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="min-width:160px;">
+                    <label class="form-label-fh">Desde</label>
+                    <input type="date" name="fechaDesde" class="form-control-fh" style="width:100%">
+                </div>
+                <div style="min-width:160px;">
+                    <label class="form-label-fh">Hasta</label>
+                    <input type="date" name="fechaHasta" class="form-control-fh" style="width:100%">
+                </div>
+                <div style="display:flex; align-items:flex-end; min-width:160px;">
+                    <button type="submit" class="btn-primary-fh" style="width:100%">
+                        <i class="fas fa-file-pdf"></i> Generar PDF
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de rendimiento -->
+<div class="admin-toolbar" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+    <div style="position: relative; max-width: 280px; flex: 1; min-width: 180px;">
+        <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.85rem;"></i>
+        <input type="text" id="searchVendedores" class="form-control-fh" placeholder="Buscar vendedor..." style="padding-left: 2.2rem; width: 100%; font-size: 0.9rem; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table-fh" id="tableVendedores">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Vendedor</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Total Ventas</th>
+                <th>Ingresos Generados</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vendedores_data %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td style="color:var(--text-primary); font-weight:600">{{ v.name }}</td>
+                <td>{{ v.email }}</td>
+                <td>
+                    {% if v.role == 'ADMIN' %}
+                    <span class="badge-fh purple">ADMIN</span>
+                    {% else %}
+                    <span class="badge-fh" style="background:rgba(249,115,22,0.15); color:#f97316">VENDEDOR</span>
+                    {% endif %}
+                </td>
+                <td style="font-weight:600; text-align:center">{{ v.total_ventas }}</td>
+                <td style="color:var(--success); font-weight:700">{{ v.ingresos_fmt }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state"><i class="fas fa-user-tie"></i> No hay vendedores registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupTableFilter('searchVendedores', 'tableVendedores', []);
+});
+</script>
+{% endblock %}

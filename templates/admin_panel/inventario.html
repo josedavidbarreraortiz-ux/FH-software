@@ -4,8 +4,23 @@
 <div class="admin-header">
     <h1><i class="fas fa-warehouse" style="color:var(--accent)"></i> Inventario</h1>
 </div>
+
+<div class="admin-toolbar" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+    <div style="position: relative; max-width: 280px; flex: 1; min-width: 180px;">
+        <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.85rem;"></i>
+        <input type="text" id="searchInventario" class="form-control-fh" placeholder="Buscar producto..." style="padding-left: 2.2rem; width: 100%; font-size: 0.9rem; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+    </div>
+    <div style="min-width: 140px;">
+        <select id="filterEstadoStock" class="form-control-fh" style="width: 100%; font-size: 0.9rem; padding: 0.5rem 0.75rem;">
+            <option value="">Todos los estados</option>
+            <option value="normal">Normal</option>
+            <option value="stock bajo">Stock Bajo</option>
+        </select>
+    </div>
+</div>
+
 <div class="table-container">
-    <table class="table-fh">
+    <table class="table-fh" id="tableInventario">
         <thead>
             <tr>
                 <th>ID</th>
@@ -50,4 +65,14 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupTableFilter('searchInventario', 'tableInventario', [
+        { selectId: 'filterEstadoStock', colIndex: 6, exactMatch: false }
+    ]);
+});
+</script>
 {% endblock %}

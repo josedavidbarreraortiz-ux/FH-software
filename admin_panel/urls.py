@@ -53,6 +53,8 @@ urlpatterns = [
     path('reportes/usuarios/pdf/', reportes.reporte_usuarios_pdf, name='reporte_usuarios_pdf'),
     path('reportes/clientes/', reportes.reporte_clientes_view, name='reporte_clientes'),
     path('reportes/clientes/pdf/', reportes.reporte_clientes_pdf, name='reporte_clientes_pdf'),
+    path('reportes/vendedores/', reportes.reporte_vendedores_view, name='reporte_vendedores'),
+    path('reportes/vendedores/pdf/', reportes.reporte_vendedores_pdf, name='reporte_vendedores_pdf'),
 
     # ── Carga Masiva ──────────────────────────────────────────────
     path('carga-masiva/', reportes.carga_masiva_view, name='carga_masiva'),

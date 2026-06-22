@@ -6,8 +6,30 @@
     <a href="/panel/productos/crear/" class="btn-primary-fh"><i class="fas fa-plus"></i> Nuevo Producto</a>
 </div>
 
+<div class="admin-toolbar" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+    <div style="position: relative; max-width: 280px; flex: 1; min-width: 180px;">
+        <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.85rem;"></i>
+        <input type="text" id="searchProductos" class="form-control-fh" placeholder="Buscar producto..." style="padding-left: 2.2rem; width: 100%; font-size: 0.9rem; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+    </div>
+    <div style="min-width: 140px;">
+        <select id="filterCategoria" class="form-control-fh" style="width: 100%; font-size: 0.9rem; padding: 0.5rem 0.75rem;">
+            <option value="">Todas las categorías</option>
+            {% for c in categorias %}
+            <option value="{{ c.categoria_nombre }}">{{ c.categoria_nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width: 130px;">
+        <select id="filterEstado" class="form-control-fh" style="width: 100%; font-size: 0.9rem; padding: 0.5rem 0.75rem;">
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+        </select>
+    </div>
+</div>
+
 <div class="table-container">
-    <table class="table-fh">
+    <table class="table-fh" id="tableProductos">
         <thead>
             <tr>
                 <th>ID</th>
@@ -55,4 +77,15 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupTableFilter('searchProductos', 'tableProductos', [
+        { selectId: 'filterCategoria', colIndex: 3, exactMatch: false },
+        { selectId: 'filterEstado', colIndex: 5, exactMatch: false }
+    ]);
+});
+</script>
 {% endblock %}

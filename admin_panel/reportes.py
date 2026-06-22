@@ -568,6 +568,157 @@ def reporte_clientes_pdf(request):
 
 
 # ══════════════════════════════════════════════════════════════════
+#  REPORTE DE VENDEDORES
+# ══════════════════════════════════════════════════════════════════
+
+@admin_required
+def reporte_vendedores_view(request):
+    """Vista HTML del reporte de vendedores con sus ventas."""
+    vendedores = User.objects.filter(role__in=['ADMIN', 'VENDEDOR'], enabled=True).order_by('name')
+
+    vendedores_data = []
+    for v in vendedores:
+        ventas_qs = Venta.objects.filter(user=v)
+        total_ventas = ventas_qs.count()
+        ingresos = ventas_qs.aggregate(total=Sum('venta_total'))['total'] or 0
+        vendedores_data.append({
+            'id': v.id,
+            'name': v.name,
+            'email': v.email,
+            'role': v.role,
+            'total_ventas': total_ventas,
+            'ingresos': ingresos,
+            'ingresos_fmt': f"${ingresos:,.0f}",
+        })
+
+    vendedores_data.sort(key=lambda x: x['ingresos'], reverse=True)
+
+    return render(request, 'admin_panel/reporte_vendedores.html', {
+        'vendedores_data': vendedores_data,
+        'vendedores': vendedores,
+    })
+
+
+@admin_required
+def reporte_vendedores_pdf(request):
+    """Genera PDF con rendimiento de vendedores."""
+    vendedor_id = request.GET.get('vendedor', '').strip()
+    fecha_desde = request.GET.get('fechaDesde', '').strip()
+    fecha_hasta = request.GET.get('fechaHasta', '').strip()
+
+    # Obtener vendedores (ADMIN y VENDEDOR)
+    vendedores_qs = User.objects.filter(role__in=['ADMIN', 'VENDEDOR'], enabled=True)
+    if vendedor_id:
+        vendedores_qs = vendedores_qs.filter(id=vendedor_id)
+
+    vendedores_data = []
+    total_ventas_general = 0
+    total_ingresos_general = Decimal('0')
+
+    for v in vendedores_qs.order_by('name'):
+        ventas_qs = Venta.objects.filter(user=v)
+        if fecha_desde:
+            ventas_qs = ventas_qs.filter(venta_fecha__gte=fecha_desde)
+        if fecha_hasta:
+            ventas_qs = ventas_qs.filter(venta_fecha__lte=fecha_hasta)
+
+        total_ventas = ventas_qs.count()
+        ingresos = ventas_qs.aggregate(total=Sum('venta_total'))['total'] or Decimal('0')
+
+        vendedores_data.append({
+            'user': v,
+            'total_ventas': total_ventas,
+            'ingresos': ingresos,
+        })
+        total_ventas_general += total_ventas
+        total_ingresos_general += ingresos
+
+    vendedores_data.sort(key=lambda x: x['ingresos'], reverse=True)
+
+    elements = []
+    filtros = []
+    if vendedor_id:
+        vn = User.objects.filter(id=vendedor_id).values_list('name', flat=True).first()
+        filtros.append(f'Vendedor: {vn}')
+    if fecha_desde:
+        filtros.append(f'Desde: {fecha_desde}')
+    if fecha_hasta:
+        filtros.append(f'Hasta: {fecha_hasta}')
+
+    _pdf_header(
+        elements, 'Reporte de Vendedores', '',
+        f'Total: {len(vendedores_data)} vendedores — {total_ventas_general} ventas — Ingresos: ${total_ingresos_general:,.0f}',
+        filtros
+    )
+
+    s = _get_pdf_styles()
+    data = [['#', 'Vendedor', 'Email', 'Rol', 'Total Ventas', 'Ingresos Generados']]
+
+    for i, vd in enumerate(vendedores_data, 1):
+        v = vd['user']
+        role_str = 'Admin' if v.role == 'ADMIN' else 'Vendedor'
+        data.append([
+            str(i),
+            Paragraph(v.name or '-', s['cell']),
+            Paragraph(v.email or '-', s['cell']),
+            role_str,
+            str(vd['total_ventas']),
+            f"${vd['ingresos']:,.0f}",
+        ])
+
+    # Fila de total
+    data.append(['', '', '', 'TOTAL:', str(total_ventas_general), f'${total_ingresos_general:,.0f}'])
+
+    t = Table(data, colWidths=[30, 140, 160, 70, 70, 100], repeatRows=1)
+    ts = _table_style()
+    ts.add('ALIGN', (0, 1), (0, -1), 'CENTER')
+    ts.add('ALIGN', (3, 1), (3, -1), 'CENTER')
+    ts.add('ALIGN', (4, 1), (4, -1), 'CENTER')
+    ts.add('ALIGN', (5, 1), (5, -1), 'RIGHT')
+    ts.add('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold')
+    ts.add('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8eaf6'))
+    t.setStyle(ts)
+    elements.append(t)
+
+    # Detalle por vendedor si se filtra uno específico
+    if vendedor_id and vendedores_data:
+        vd = vendedores_data[0]
+        ventas_detalle = Venta.objects.filter(user=vd['user']).select_related('comprador', 'metodo_pago')
+        if fecha_desde:
+            ventas_detalle = ventas_detalle.filter(venta_fecha__gte=fecha_desde)
+        if fecha_hasta:
+            ventas_detalle = ventas_detalle.filter(venta_fecha__lte=fecha_hasta)
+        ventas_detalle = ventas_detalle.order_by('-venta_fecha', '-venta_hora')
+
+        if ventas_detalle.exists():
+            elements.append(Spacer(1, 25))
+            s_title = ParagraphStyle('T2', parent=s['title'], fontSize=14)
+            elements.append(Paragraph(f'Detalle de Ventas — {vd["user"].name}', s_title))
+
+            data_det = [['#', 'Fecha', 'Hora', 'Cliente', 'Método Pago', 'Total']]
+            for venta in ventas_detalle:
+                data_det.append([
+                    str(venta.venta_codigo),
+                    str(venta.venta_fecha) if venta.venta_fecha else '-',
+                    venta.venta_hora.strftime('%H:%M') if venta.venta_hora else '-',
+                    Paragraph(venta.comprador.name if venta.comprador else '-', s['cell']),
+                    venta.metodo_pago.metodo_pago_nombre if venta.metodo_pago else '-',
+                    f'${venta.venta_total:,.0f}' if venta.venta_total else '$0',
+                ])
+            t_det = Table(data_det, colWidths=[50, 75, 50, 160, 100, 80], repeatRows=1)
+            ts_d = _table_style()
+            ts_d.add('ALIGN', (0, 1), (0, -1), 'CENTER')
+            ts_d.add('ALIGN', (5, 1), (5, -1), 'RIGHT')
+            t_det.setStyle(ts_d)
+            elements.append(t_det)
+
+    buf = _build_pdf(elements)
+    resp = HttpResponse(buf, content_type='application/pdf')
+    resp['Content-Disposition'] = f'inline; filename="reporte_vendedores_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf"'
+    return resp
+
+
+# ══════════════════════════════════════════════════════════════════
 #  CARGA MASIVA DE PRODUCTOS
 # ══════════════════════════════════════════════════════════════════
 
