@@ -111,15 +111,16 @@ def vendedor_dashboard(request):
     """Dashboard limitado para vendedores: solo info de ventas."""
     from django.db.models import Sum
     
-    total_ventas = Venta.objects.count()
-    ventas_hoy = Venta.objects.filter(venta_fecha=date.today()).count()
-    ingresos_total = Venta.objects.aggregate(total=Sum('venta_total'))['total'] or 0
-    
     # Ventas del vendedor actual
     user_id = request.session.get('user_id')
-    mis_ventas = Venta.objects.filter(user_id=user_id).count()
     
-    ultimas_ventas = Venta.objects.select_related(
+    total_ventas = Venta.objects.filter(user_id=user_id).count()
+    ventas_hoy = Venta.objects.filter(user_id=user_id, venta_fecha=date.today()).count()
+    ingresos_total = Venta.objects.filter(user_id=user_id).aggregate(total=Sum('venta_total'))['total'] or 0
+    
+    mis_ventas = total_ventas
+    
+    ultimas_ventas = Venta.objects.filter(user_id=user_id).select_related(
         'comprador', 'user', 'metodo_pago'
     ).order_by('-venta_fecha', '-venta_hora')[:10]
     
@@ -543,13 +544,27 @@ def usuario_delete(request, pk):
 
 @staff_required
 def ventas_list(request):
-    ventas = Venta.objects.select_related('comprador', 'user', 'metodo_pago').all().order_by('-venta_fecha', '-venta_hora')
+    user_role = request.session.get('user_role')
+    user_id = request.session.get('user_id')
+    
+    qs = Venta.objects.select_related('comprador', 'user', 'metodo_pago')
+    if user_role == 'VENDEDOR':
+        qs = qs.filter(user_id=user_id)
+        
+    ventas = qs.all().order_by('-venta_fecha', '-venta_hora')
     return render(request, 'admin_panel/ventas.html', {'ventas': ventas})
 
 
 @staff_required
 def venta_detalle_view(request, pk):
     venta = get_object_or_404(Venta, pk=pk)
+    user_role = request.session.get('user_role')
+    user_id = request.session.get('user_id')
+    
+    if user_role == 'VENDEDOR' and venta.user_id != user_id:
+        messages.error(request, 'No tienes permiso para ver esta venta.')
+        return redirect('/panel/ventas/')
+        
     detalles = VentaDetalle.objects.filter(venta=venta).select_related('producto')
     return render(request, 'admin_panel/venta_detalle.html', {
         'venta': venta,
