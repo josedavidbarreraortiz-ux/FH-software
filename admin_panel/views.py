@@ -744,16 +744,20 @@ def venta_create(request):
                 try:
                     html_message = render_to_string('tienda/email_compra.html', ctx)
                     plain_message = strip_tags(html_message)
+                    print(f"[MAIL] Intentando enviar correo de confirmación a {comprador.email}...")
                     send_mail(
                         subject=f"Confirmación de Compra #{venta.venta_codigo} - FH TechStore",
                         message=plain_message,
                         from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@fh.com'),
                         recipient_list=[comprador.email],
                         html_message=html_message,
-                        fail_silently=True,
+                        fail_silently=False,
                     )
-                except Exception:
-                    pass
+                    print(f"[MAIL] Correo enviado exitosamente a {comprador.email}.")
+                except Exception as e:
+                    print(f"[MAIL ERROR] Falló el envío a {comprador.email}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
 
             threading.Thread(target=_send_email, daemon=True).start()
 
