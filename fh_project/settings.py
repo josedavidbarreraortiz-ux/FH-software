@@ -14,6 +14,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'anymail',
     'accounts',
     'admin_panel',
     'tienda',
@@ -101,14 +102,24 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # ── Email Configuration ──
-# Para producción con Gmail:
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'josedavidbarreraortiz@gmail.com'    # ← Tu correo Gmail
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'hpmr fhxr rymv ezxu')    # ← Contraseña de aplicación de Gmail
-DEFAULT_FROM_EMAIL = 'FH TechStore <josedavidbarreraortiz@gmail.com>'
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
+
+if BREVO_API_KEY:
+    # Producción en Render con Brevo HTTP API
+    EMAIL_BACKEND = 'anymail.backends.sendinblue.EmailBackend'
+    ANYMAIL = {
+        "SENDINBLUE_API_KEY": BREVO_API_KEY,
+    }
+    DEFAULT_FROM_EMAIL = 'FH TechStore <josedavidbarreraortiz@gmail.com>'
+else:
+    # Desarrollo local con Gmail SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'josedavidbarreraortiz@gmail.com'    # ← Tu correo Gmail
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'hpmr fhxr rymv ezxu')    # ← Contraseña de aplicación
+    DEFAULT_FROM_EMAIL = 'FH TechStore <josedavidbarreraortiz@gmail.com>'
 
 # Tiempo de expiración del token de recuperación (en segundos) — 1 hora
 PASSWORD_RESET_TIMEOUT = 360010896
