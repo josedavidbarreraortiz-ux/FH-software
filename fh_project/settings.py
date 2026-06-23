@@ -102,7 +102,7 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # ── Email Configuration ──
-BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
 
 if BREVO_API_KEY:
     # Producción en Render con Brevo HTTP API
